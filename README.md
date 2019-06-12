@@ -26,7 +26,7 @@ Test -> Long:id:primary -> String:about
 
 This model will create you all basic CRUD operations for controllers for two entity "Demo" and "Test" also will generate mappers and services and automatically will autowire everything.
 
-keyword "primary" is for primary key collumn.
+keyword "primary" is for primary key column.
 
 The script will generate the most import commands, but some you need to mannualy like a package declaration and all the imports based on the project package.
 
