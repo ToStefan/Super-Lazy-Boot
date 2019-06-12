@@ -19,21 +19,13 @@ Generate controllers, services, mappers, anotations and much more for spring boo
 
 ### Model file example & syntax explain
 
+```sh
 Demo -> Long:id:primary -> String:text -> Integer:count
 Test -> Long:id:primary -> String:about
+```
 
 This model will create you all basic CRUD operations for controllers for two entity "Demo" and "Test" also will generate mappers and services and automatically will autowire everything.
 The script will generate the most import commands, but some you need to mannualy like a package declaration and all the imports based on the project package.
-
-_Package structure:_
-├── web
-│   ├── dto
-│   ├── controller
-│   └── mapper
-├── service
-│   └── impl
-├── repository
-├── entity
 
 ### Future features
 
