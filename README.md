@@ -30,6 +30,8 @@ keyword "primary" is for primary key collumn.
 
 The script will generate the most import commands, but some you need to mannualy like a package declaration and all the imports based on the project package.
 
+Model file can be with any extension.
+
 ### Future features
 
 + Generating whole spring boot project 
