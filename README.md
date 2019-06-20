@@ -1,4 +1,4 @@
-# Easy Spring Boot
+# Super Lazy Boot
 
 Generate controllers, services, mappers, anotations and much more for spring boot with just writting simple model file.
 
