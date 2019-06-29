@@ -103,7 +103,6 @@ def generateDtos(className, attributes):
         javaDto.write("\n")
     javaDto.write("}")
 
-
 def generateRepositories(className, primaryKeyType):
 
     print(">> Generating repository for " + className + " -> ID type: " + primaryKeyType)
@@ -286,7 +285,6 @@ def generateControllers(className, attributes):
     controllerClass.write("    }\n\n")
     controllerClass.write("}")
     
-
 def getPrimaryKeyType(attributes):
 
     for att in attributes:
