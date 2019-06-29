@@ -1,3 +1,5 @@
+import os
+
 def getPrimaryKeyType(attributes):
     for att in attributes:
         attribute = att.split(":")
@@ -6,3 +8,9 @@ def getPrimaryKeyType(attributes):
                 return attribute[0]
         except:
             pass
+
+def clear():
+	if(os.system == "nt"):
+		os.system("clear")
+	else:
+		os.system("cls")
