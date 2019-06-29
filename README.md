@@ -38,5 +38,3 @@ Model file can be with any extension.
 + Generating source code on web platform
 + Exception handling
 + Spring Security
-+ Enum support
-+ ...
