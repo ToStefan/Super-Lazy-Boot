@@ -3,55 +3,57 @@ import os
 import structure
 from utils import getPrimaryKeyType
 
+writeReadType = "w+"
+
 lombok = False
 
 def generator(classMap, enumMap, settingsMap):
     structure.generateProject()
 
-    fileMapperInterface = open(structure.mapper + "/Mapper.java", "w+")
+    fileMapperInterface = open(structure.mapper + "/Mapper.java", writeReadType)
     mapperInterface = generateMapperInteface()
     fileMapperInterface.write(mapperInterface)
-
-    for key, values in classMap.items():
-
-        fileEntity = open(structure.entity + key + ".java", "w+")
-        javaEntity = generateEntities(key, values)
-        fileEntity.write(javaEntity)
-
-        fileDto = open(structure.dto + key + "DTO.java", "w+")
-        javaDto = generateDtos(key, values)
-        fileDto.write(javaDto)
-
-        fileRepository = open(structure.repository + key + "Repository.java", "w+")
-        javaRepository = generateRepositories(key, getPrimaryKeyType(values))
-        fileRepository.write(javaRepository)
-
-        fileMapperClass = open(structure.mapper + key + "Mapper.java", "w+")
-        mapperClass = generateMappers(key, values)
-        fileMapperClass.write(mapperClass)
-
-        fileServiceInterface = open(structure.service + key + "Service.java", "w+")
-        serviceInterface = generateServiceInterface(key, values)
-        fileServiceInterface.write(serviceInterface)
-
-        fileServiceImpl = open(structure.serviceImpl + key + "ServiceImpl.java", "w+")
-        serviceImpl = generateService(key, values)
-        fileServiceImpl.write(serviceImpl)
-
-        fileController = open(structure.controller + key + "Controller.java", "w+")
-        controllerClass = generateControllers(key, values)
-        fileController.write(controllerClass)
-        print("")
-
-    for key, values in enumMap.items():
-        fileEnum = open(structure.entity + key + ".java", "w+")
-        javaEnum = generateEnumeration(key, values)
-        fileEnum.write(javaEnum)
 
     for key, value in settingsMap.items():
         if(key == "lombok"):
             global lombok
             lombok = value.capitalize()
+
+    for key, values in classMap.items():
+
+        fileEntity = open(structure.entity + key + ".java", writeReadType)
+        javaEntity = generateEntities(key, values)
+        fileEntity.write(javaEntity)
+
+        fileDto = open(structure.dto + key + "DTO.java", writeReadType)
+        javaDto = generateDtos(key, values)
+        fileDto.write(javaDto)
+
+        fileRepository = open(structure.repository + key + "Repository.java", writeReadType)
+        javaRepository = generateRepositories(key, getPrimaryKeyType(values))
+        fileRepository.write(javaRepository)
+
+        fileMapperClass = open(structure.mapper + key + "Mapper.java", writeReadType)
+        mapperClass = generateMappers(key, values)
+        fileMapperClass.write(mapperClass)
+
+        fileServiceInterface = open(structure.service + key + "Service.java", writeReadType)
+        serviceInterface = generateServiceInterface(key, values)
+        fileServiceInterface.write(serviceInterface)
+
+        fileServiceImpl = open(structure.serviceImpl + key + "ServiceImpl.java", writeReadType)
+        serviceImpl = generateService(key, values)
+        fileServiceImpl.write(serviceImpl)
+
+        fileController = open(structure.controller + key + "Controller.java", writeReadType)
+        controllerClass = generateControllers(key, values)
+        fileController.write(controllerClass)
+        print("")
+
+    for key, values in enumMap.items():
+        fileEnum = open(structure.entity + key + ".java", writeReadType)
+        javaEnum = generateEnumeration(key, values)
+        fileEnum.write(javaEnum)
 
 def generateMapperInteface():
     print(">> Generating Mapper Interface...\n")
@@ -138,6 +140,7 @@ def generateEnumeration(enumName, values):
 def generateEntities(className, attributes):
     print(">> Generating class: {className} -> attributes: {attributes}".format(className=className, attributes=attributes))
     javaEntity = "";
+    global lombok
 
     # Imports
     javaEntity += "import javax.persistence.Entity;\n"
@@ -145,8 +148,16 @@ def generateEntities(className, attributes):
     javaEntity += "import javax.persistence.GenerationType;\n"
     javaEntity += "import javax.persistence.Id;\n"
     javaEntity += "import javax.persistence.Table;\n\n"
+    if(eval(lombok) == True):
+        javaEntity += "import lombok.Getter;\n"
+        javaEntity += "import lombok.Setter;\n"
+        javaEntity += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header
+    if(eval(lombok) == True):
+        javaEntity += "@Getter\n"
+        javaEntity += "@Setter\n"
+        javaEntity += "@NoArgsConstructor\n"
     javaEntity += "@Entity\n"
     javaEntity += "@Table(name = \"{classNameLowerCase}\")".format(classNameLowerCase=className.lower()) + "\n"
     javaEntity += "public class " + className + " {\n"
@@ -164,24 +175,24 @@ def generateEntities(className, attributes):
             javaEntity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
         javaEntity += "\n"
             
-
-    # Default constructor
-    javaEntity += "    public " + className + "() {\n"
-    javaEntity += "\n"
-    javaEntity += "    }\n"
-    javaEntity += "\n"
-
-    # Getters/Setters
-    for att in attributes:
-        attribute = att.split(":")
-        javaEntity += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
-        javaEntity += "        return " + attribute[1] + ";\n"
+    if(eval(lombok) == False):
+        # Default constructor
+        javaEntity += "    public " + className + "() {\n"
+        javaEntity += "\n"
         javaEntity += "    }\n"
         javaEntity += "\n"
-        javaEntity += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
-        javaEntity += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
-        javaEntity += "    }\n"
-        javaEntity += "\n"
+
+        # Getters/Setters
+        for att in attributes:
+            attribute = att.split(":")
+            javaEntity += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
+            javaEntity += "        return " + attribute[1] + ";\n"
+            javaEntity += "    }\n"
+            javaEntity += "\n"
+            javaEntity += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
+            javaEntity += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
+            javaEntity += "    }\n"
+            javaEntity += "\n"
     javaEntity += "}"
 
     return javaEntity
@@ -189,33 +200,45 @@ def generateEntities(className, attributes):
 def generateDtos(className, attributes):
     print(">> Generating DTO: {className}DTO -> attributes: {attributes}".format(className=className, attributes=attributes))
     javaDto = ""
+    global lombok
+
+    # Imports
+    if(eval(lombok) == True):
+        javaDto += "import lombok.Getter;\n"
+        javaDto += "import lombok.Setter;\n"
+        javaDto += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header
+    if(eval(lombok) == True):
+        javaDto += "@Getter\n"
+        javaDto += "@Setter\n"
+        javaDto += "@NoArgsConstructor\n"
     javaDto += "public class " + className + "DTO {\n\n"
 
     # Attributes
     for att in attributes:
         attribute = att.split(":")
         javaDto += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
-    javaDto += "\n"
-    javaDto += "    public " + className + "DTO() {\n"
-    javaDto += "\n"
-    javaDto += "    }\n"
-    javaDto += "\n"
 
-    # Getters/Setters
-    for att in attributes:
-        attribute = att.split(":")
-        javaDto += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
-        javaDto += "        return " + attribute[1] + ";\n"
+        # Default constructor
+    if(eval(lombok) == False):
+        javaDto += "    public " + className + "() {\n"
+        javaDto += "\n"
         javaDto += "    }\n"
         javaDto += "\n"
-        javaDto += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
-        javaDto += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
-        javaDto += "    }\n"
-        javaDto += "\n"
+
+        # Getters/Setters
+        for att in attributes:
+            attribute = att.split(":")
+            javaDto += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
+            javaDto += "        return " + attribute[1] + ";\n"
+            javaDto += "    }\n"
+            javaDto += "\n"
+            javaDto += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
+            javaDto += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
+            javaDto += "    }\n"
+            javaDto += "\n"
     javaDto += "}"
-
     return javaDto
 
 def generateRepositories(className, primaryKeyType):
@@ -253,19 +276,30 @@ def generateServiceInterface(className, attributes):
 def generateService(className, attributes):
     print(">> Generating service for " + className)
     serviceImpl = ""
+    global lombok
     
     # Imports
     serviceImpl += "import java.util.List;\n"
     serviceImpl += "import org.springframework.beans.factory.annotation.Autowired;\n"
     serviceImpl += "import org.springframework.stereotype.Service;\n\n"
+    if(eval(lombok) == True):
+        serviceImpl += "import lombok.NoArgsConstructor;\n\n"
 
-    # Methods
+    # Class header & dependency injection
+    if(eval(lombok) == True):
+        serviceImpl += "@AllArgsConstructor\n"
     serviceImpl += "@Service\n"
     serviceImpl += "public class " + className + "ServiceImpl implements " + className + "Service {\n\n"
-    serviceImpl += "    @Autowired\n"
-    serviceImpl += "    private " + className + "Repository " + className.lower() + "Repository;\n\n"
-    serviceImpl += "    @Autowired\n"
-    serviceImpl += "    private " + className + "Mapper " + className.lower() + "Mapper;\n\n"
+    if(eval(lombok) == True):
+        serviceImpl += "    private final " + className + "Repository " + className.lower() + "Repository;\n"
+        serviceImpl += "    private final " + className + "Mapper " + className.lower() + "Mapper;\n\n"
+    else:
+        serviceImpl += "    @Autowired\n"
+        serviceImpl += "    private " + className + "Repository " + className.lower() + "Repository;\n\n"
+        serviceImpl += "    @Autowired\n"
+        serviceImpl += "    private " + className + "Mapper " + className.lower() + "Mapper;\n\n"
+
+    # Methods
     serviceImpl += "    @Override\n"
     serviceImpl += "    public List<" + className + "DTO> findAll() {\n"
     serviceImpl += "        return " + className.lower() + "Mapper.toDTO(" + className.lower() + "Repository.findAll());\n"
@@ -294,9 +328,10 @@ def generateService(className, attributes):
 def generateControllers(className, attributes):
     print(">> Generating controller for " + className)
     controllerClass = ""
+    global lombok
 
     # Imports
-    controllerClass += "import java.util.List;"
+    controllerClass += "import java.util.List;\n"
     controllerClass += "import org.springframework.beans.factory.annotation.Autowired;\n"
     controllerClass += "import org.springframework.http.HttpStatus;\n"
     controllerClass += "import org.springframework.http.ResponseEntity;\n"
@@ -308,13 +343,20 @@ def generateControllers(className, attributes):
     controllerClass += "import org.springframework.web.bind.annotation.RequestBody;\n"
     controllerClass += "import org.springframework.web.bind.annotation.RequestMapping;\n"
     controllerClass += "import org.springframework.web.bind.annotation.RestController;\n\n"
+    if(eval(lombok) == True):
+        controllerClass += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header & dependency injection
+    if(eval(lombok) == True):
+        controllerClass += "@AllArgsConstructor\n"
     controllerClass += "@RestController\n"
     controllerClass += "@RequestMapping(value = \"/api/" + className.lower() + "\")\n"
     controllerClass += "public class " + className + "Controller {\n\n"
-    controllerClass += "    @Autowired\n"
-    controllerClass += "    private " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
+    if(eval(lombok) == True):
+        controllerClass += "    private final " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
+    else:
+        controllerClass += "    @Autowired\n"
+        controllerClass += "    private " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
 
     # Controllers
     controllerClass += "    @GetMapping\n"

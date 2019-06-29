@@ -26,7 +26,7 @@ Class {
 }
 
 Settings {
-	lombok:true (default is false)
+	lombok:true (default: false)
 }
 
 
