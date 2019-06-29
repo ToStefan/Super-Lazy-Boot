@@ -4,17 +4,17 @@ Generate controllers, services, mappers, anotations and much more for spring boo
 
 ## Installation
 
-+ Easy Spring Boot requires [Python](https://www.python.org/) v2.7 to run.
++ Super Lazy Boot requires [Python](https://www.python.org/) v2.7 to run.
 + Install Python and clone repository.
 
 ```sh
-> git clone https://github.com/ToStefan/Easy-Spring-Boot.git
+> git clone https://github.com/ToStefan/Super-Lazy-Boot.git
 ```
 
 + Start application.
 
 ```sh
-> python easy-spring-boot.py YOUR-MODEL-FILE
+> python super-lazy-boot.py YOUR-MODEL-FILE
 ```
 
 ### Model file example & syntax explain
