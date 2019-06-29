@@ -1,15 +1,11 @@
-import fileinput
 import os
 import sys
 
-from generators import generateMapperInteface, generateEntities, generateRepositories, generateDtos, \
-generateMappers, generateServiceInterface, generateServices, generateControllers, generateEnumeration
-from structure import generateProject
-from utils import getPrimaryKeyType
+from generators import generator
 
 classMap = {}
 enumMap = {}
-lombok = False
+settingsMap = {}
 
 def syntaxCheck():
     pass
@@ -32,29 +28,9 @@ def parser():
     settings = data.split("Settings{")[1].split("}")[0].split(",")
     for eachSetting in settings:
         eachSetting = eachSetting.split(":")
-        if(eachSetting[0] == "lombok"):
-            global lombok
-            lombok = eachSetting[1].capitalize()
-
-def generateMain():
-    generateProject()
-    generateMapperInteface()
-
-    for key, values in classMap.items():
-        generateEntities(key, values)
-        generateRepositories(key, getPrimaryKeyType(values))
-        generateDtos(key, values)
-        generateMappers(key, values)
-        generateServiceInterface(key, values)
-        generateServices(key, values)
-        generateControllers(key, values)
-        print("")
-
-    for key, values in enumMap.items():
-        generateEnumeration(key, values)
-
+        settingsMap[eachSetting[0]] = eachSetting[1]
 
 if __name__ == "__main__":
     os.system("cls")    
     parser()
-    generateMain()
+    generator(classMap, enumMap, settingsMap)
