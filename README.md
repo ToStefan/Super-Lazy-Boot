@@ -21,7 +21,7 @@ Generate controllers, services, mappers, anotations and much more for spring boo
 
 ```sh
 Class {
-	User -> Long:id:primary -> String:firstname -> String:lastname -> String:username -> String:password -> Role:role,
+	User -> Long:id:primary -> String:username -> String:password -> Role:role,
 	Job -> Long:id:primary -> String:title -> WorkType:workType
 }
 
