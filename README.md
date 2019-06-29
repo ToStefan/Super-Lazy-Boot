@@ -48,7 +48,7 @@ Model file can be with any extension.
 
 ### Future features
 
-+ Generating whole spring boot project 
-+ Generating source code on web platform
++ Generating on web platform
 + Exception handling
 + Spring Security
++ Nested resrouces
