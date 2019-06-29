@@ -1,36 +1,60 @@
 import fileinput
 import os
+import sys
 
 from generators import generateMapperInteface, generateEntities, generateRepositories, generateDtos, \
 generateMappers, generateServiceInterface, generateServices, generateControllers, generateEnumeration
 from structure import generateProject
 from utils import getPrimaryKeyType
 
+classMap = {}
+enumMap = {}
+lombok = False
+
+def syntaxCheck():
+    pass
+
+def parser():
+
+    with open(sys.argv[1], 'r') as file:
+        data = file.read().replace(" ", "").replace("\n", "").replace("\t", "").rstrip()
+
+    classes = data.split("Class{")[1].split("}")[0].split(",")
+    for eachClass in classes:
+        eachClass = eachClass.split("->")
+        classMap[eachClass[0]] = eachClass[1:]
+
+    enums = data.split("Enum{")[1].split("}")[0].split(",")
+    for eachEnum in enums:
+        eachEnum = eachEnum.split("->")
+        enumMap[eachEnum[0]] = eachEnum[1:]
+
+    settings = data.split("Settings{")[1].split("}")[0].split(",")
+    for eachSetting in settings:
+        eachSetting = eachSetting.split(":")
+        if(eachSetting[0] == "lombok"):
+            global lombok
+            lombok = eachSetting[1].capitalize()
+
 def generateMain():
     generateProject()
     generateMapperInteface()
-    for line in fileinput.input():
-        data = line.replace(" ", "").rstrip().split("->")
-        classEnum = data[0].split(":")
-        if(classEnum[0] == "enum"):
-            enumValues = []
-            for enum in data[1:]:
-                enumValues.append(enum)
-            generateEnumeration(classEnum[1], enumValues)
-        else:
-            attributes = []
-            for el in data[1:]:
-                attributes.append(el)
 
-            generateEntities(classEnum[1], attributes)
-            generateRepositories(classEnum[1], getPrimaryKeyType(attributes))
-            generateDtos(classEnum[1], attributes)
-            generateMappers(classEnum[1], attributes)
-            generateServiceInterface(classEnum[1], attributes)
-            generateServices(classEnum[1], attributes)
-            generateControllers(classEnum[1], attributes)
-            print("")
+    for key, values in classMap.items():
+        generateEntities(key, values)
+        generateRepositories(key, getPrimaryKeyType(values))
+        generateDtos(key, values)
+        generateMappers(key, values)
+        generateServiceInterface(key, values)
+        generateServices(key, values)
+        generateControllers(key, values)
+        print("")
+
+    for key, values in enumMap.items():
+        generateEnumeration(key, values)
+
 
 if __name__ == "__main__":
     os.system("cls")    
+    parser()
     generateMain()

@@ -29,4 +29,5 @@ def generateProject():
         os.makedirs(controller)
     if not os.path.exists(mapper):
         os.makedirs(mapper)
+        
     print(">> Project structure generated!\n")
