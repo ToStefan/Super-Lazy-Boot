@@ -21,7 +21,7 @@ def main():
         pass
 
 def syntaxCheck():
-    print(">> Syntax check...\n")
+    print(">> Syntax check...")
 
     def classCheck():
         for key, values in classMap.items():
@@ -63,32 +63,46 @@ def parser():
     with open(sys.argv[1], 'r') as file:
         data = file.read().replace(" ", "").replace("\n", "").replace("\t", "").rstrip()
 
-    classes = data.split("Class{")[1].split("}")[0].split(",")
+    def classParser(data):
+        classes = data.split("Class{")[1].split("}")[0].split(",")
+        for eachClass in classes:
+            if(eachClass == ""):
+                print("    INFO: Comma at end of class declaration detected")
+            else:
+                eachClass = eachClass.split("->")
+                classMap[eachClass[0]] = eachClass[1:]
+
+    def enumParser(data):
+        enums = data.split("Enum{")[1].split("}")[0].split(",")
+        for eachEnum in enums:
+            if(eachEnum == ""):
+                print("    INFO: Comma at end of enum declaration detected")
+            else:
+                eachEnum = eachEnum.split("->")
+                enumMap[eachEnum[0]] = eachEnum[1:]
+
+    def settingsParser(data):
+        try:
+            settings = data.split("Settings{")[1].split("}")[0].split(",")
+            if(settings[0] == ""):
+                print("    INFO: No settings specified")
+            else:
+                for eachSetting in settings:
+                    if(eachSetting == ""):
+                        print("    INFO: Comma at end of settings declaration detected")
+                    else:
+                        eachSetting = eachSetting.split(":")
+                        settingsMap[eachSetting[0]] = eachSetting[1:]
+        except IndexError:
+            print("    INFO: No settings specified")
+
     print(">> Parsing classes...")
-    for eachClass in classes:
-        if(eachClass == ""):
-            print("    Comma at end of Class declaration detected")
-        else:
-            eachClass = eachClass.split("->")
-            classMap[eachClass[0]] = eachClass[1:]
-
-    enums = data.split("Enum{")[1].split("}")[0].split(",")
+    classParser(data)
     print(">> Parsing enums...")
-    for eachEnum in enums:
-        if(eachEnum == ""):
-            print("    Comma at end of Enum declaration detected")
-        else:
-            eachEnum = eachEnum.split("->")
-            enumMap[eachEnum[0]] = eachEnum[1:]
-
-    settings = data.split("Settings{")[1].split("}")[0].split(",")
+    enumParser(data)
     print(">> Parsing settings...")
-    for eachSetting in settings:
-        if(eachSetting == ""):
-            print("    Comma at end of Settings declaration detected")
-        else:
-            eachSetting = eachSetting.split(":")
-            settingsMap[eachSetting[0]] = eachSetting[1:]
+    settingsParser(data)
+    
 
 if __name__ == "__main__":
     clear()

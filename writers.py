@@ -5,7 +5,6 @@ from utils import getPrimaryKeyType
 
 writeReadType = "w+"
 
-
 def writer(classMap, enumMap):
 
 	structure.generateProject()

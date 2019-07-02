@@ -4,7 +4,7 @@ def setSettings(settingsMap):
     for key, value in settingsMap.items():
         if(key == "lombok"):
             global lombok
-            lombok = value[0].capitalize()
+            lombok = eval(value[0].capitalize())
 
 def generateMapperInteface():
     mapperInterface = ""
@@ -94,13 +94,13 @@ def generateEntities(className, attributes):
     javaEntity += "import javax.persistence.GenerationType;\n"
     javaEntity += "import javax.persistence.Id;\n"
     javaEntity += "import javax.persistence.Table;\n\n"
-    if(eval(lombok) == True):
+    if(lombok) == True:
         javaEntity += "import lombok.Getter;\n"
         javaEntity += "import lombok.Setter;\n"
         javaEntity += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header
-    if(eval(lombok) == True):
+    if(lombok) == True:
         javaEntity += "@Getter\n"
         javaEntity += "@Setter\n"
         javaEntity += "@NoArgsConstructor\n"
@@ -121,7 +121,7 @@ def generateEntities(className, attributes):
             javaEntity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
         javaEntity += "\n"
             
-    if(eval(lombok) == False):
+    if(lombok) == False:
         # Default constructor
         javaEntity += "    public " + className + "() {\n"
         javaEntity += "\n"
@@ -148,13 +148,13 @@ def generateDtos(className, attributes):
     global lombok
 
     # Imports
-    if(eval(lombok) == True):
+    if(lombok) == True:
         javaDto += "import lombok.Getter;\n"
         javaDto += "import lombok.Setter;\n"
         javaDto += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header
-    if(eval(lombok) == True):
+    if(lombok) == True:
         javaDto += "@Getter\n"
         javaDto += "@Setter\n"
         javaDto += "@NoArgsConstructor\n"
@@ -166,7 +166,7 @@ def generateDtos(className, attributes):
         javaDto += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
 
         # Default constructor
-    if(eval(lombok) == False):
+    if(lombok) == False:
         javaDto += "    public " + className + "() {\n"
         javaDto += "\n"
         javaDto += "    }\n"
@@ -224,15 +224,15 @@ def generateService(className, attributes):
     serviceImpl += "import java.util.List;\n"
     serviceImpl += "import org.springframework.beans.factory.annotation.Autowired;\n"
     serviceImpl += "import org.springframework.stereotype.Service;\n\n"
-    if(eval(lombok) == True):
+    if(lombok) == True:
         serviceImpl += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header & dependency injection
-    if(eval(lombok) == True):
+    if(lombok) == True:
         serviceImpl += "@AllArgsConstructor\n"
     serviceImpl += "@Service\n"
     serviceImpl += "public class " + className + "ServiceImpl implements " + className + "Service {\n\n"
-    if(eval(lombok) == True):
+    if(lombok) == True:
         serviceImpl += "    private final " + className + "Repository " + className.lower() + "Repository;\n"
         serviceImpl += "    private final " + className + "Mapper " + className.lower() + "Mapper;\n\n"
     else:
@@ -284,16 +284,16 @@ def generateControllers(className, attributes):
     controllerClass += "import org.springframework.web.bind.annotation.RequestBody;\n"
     controllerClass += "import org.springframework.web.bind.annotation.RequestMapping;\n"
     controllerClass += "import org.springframework.web.bind.annotation.RestController;\n\n"
-    if(eval(lombok) == True):
+    if(lombok) == True:
         controllerClass += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header & dependency injection
-    if(eval(lombok) == True):
+    if(lombok) == True:
         controllerClass += "@AllArgsConstructor\n"
     controllerClass += "@RestController\n"
     controllerClass += "@RequestMapping(value = \"/api/" + className.lower() + "\")\n"
     controllerClass += "public class " + className + "Controller {\n\n"
-    if(eval(lombok) == True):
+    if(lombok) == True:
         controllerClass += "    private final " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
     else:
         controllerClass += "    @Autowired\n"
