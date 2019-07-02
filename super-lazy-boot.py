@@ -44,10 +44,10 @@ def syntaxCheck():
                 try:
                     eval(value[0].capitalize())
                 except NameError as e:
-                    raise SyntaxError(key + " value must be True or False")
+                    raise SyntaxError(key + " value must be true or false")
             elif(key == "security"):
                 if(value[0] != "jwt" and value[0] != "basic"):
-                    raise SyntaxError(key + " authentication must be jwt or basic")
+                    raise SyntaxError(key + " authentication must be 'jwt' or 'basic'")
         print("")
 
     try:
@@ -64,22 +64,31 @@ def parser():
         data = file.read().replace(" ", "").replace("\n", "").replace("\t", "").rstrip()
 
     def classParser(data):
-        classes = data.split("Class{")[1].split("}")[0].split(",")
-        for eachClass in classes:
-            if(eachClass == ""):
-                print("    INFO: Comma at end of class declaration detected")
-            else:
-                eachClass = eachClass.split("->")
-                classMap[eachClass[0]] = eachClass[1:]
+        try:
+            classes = data.split("Class{")[1].split("}")[0].split(",")
+            for eachClass in classes:
+                if(eachClass == ""):
+                    print("    INFO: Comma at end of class declaration detected")
+                else:
+                    eachClass = eachClass.split("->")
+                    classMap[eachClass[0]] = eachClass[1:]
+        except IndexError:
+            print("    INFO: No classes specified")
+            raise SystemExit(0)
+        
 
     def enumParser(data):
-        enums = data.split("Enum{")[1].split("}")[0].split(",")
-        for eachEnum in enums:
-            if(eachEnum == ""):
-                print("    INFO: Comma at end of enum declaration detected")
-            else:
-                eachEnum = eachEnum.split("->")
-                enumMap[eachEnum[0]] = eachEnum[1:]
+        try:
+            enums = data.split("Enum{")[1].split("}")[0].split(",")
+            for eachEnum in enums:
+                if(eachEnum == ""):
+                    print("    INFO: Comma at end of enum declaration detected")
+                else:
+                    eachEnum = eachEnum.split("->")
+                    enumMap[eachEnum[0]] = eachEnum[1:]
+        except IndexError:
+            print("    INFO: No enums specified")
+        
 
     def settingsParser(data):
         try:
