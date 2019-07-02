@@ -1,6 +1,7 @@
 import sys
 
-from generators import generator
+from writers import writer
+from generators import setSettings
 from utils import clear
 
 classMap = {}
@@ -14,7 +15,8 @@ def main():
     print("")
     confirm = raw_input("y/n >> ")
     if(confirm == "y" or confirm == "Y"):
-        generator(classMap, enumMap, settingsMap)
+        setSettings(settingsMap)
+        writer(classMap, enumMap)
     else:
         pass
 
