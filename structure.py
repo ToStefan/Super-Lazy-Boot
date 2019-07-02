@@ -30,4 +30,4 @@ def generateProject():
     if not os.path.exists(mapper):
         os.makedirs(mapper)
         
-    print(">> Project structure generated!\n")
+    print("\n>> Project structure generated!\n")

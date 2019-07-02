@@ -50,3 +50,4 @@ Model file can be with any extension.
 + Exception handling
 + Spring Security
 + Nested resrouces
++ Pagination

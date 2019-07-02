@@ -8,52 +8,60 @@ writeReadType = "w+"
 lombok = False
 
 def generator(classMap, enumMap, settingsMap):
+
     structure.generateProject()
 
     fileMapperInterface = open(structure.mapper + "/Mapper.java", writeReadType)
     mapperInterface = generateMapperInteface()
     fileMapperInterface.write(mapperInterface)
 
-    for key, value in settingsMap.items():
-        if(key == "lombok"):
-            global lombok
-            lombok = value.capitalize()
+    def settingsCheck(settingsMap):
+        for key, value in settingsMap.items():
+            if(key == "lombok"):
+                global lombok
+                lombok = value.capitalize()
 
-    for key, values in classMap.items():
+    def classGenerator(classMap):
+        for key, values in classMap.items():
 
-        fileEntity = open(structure.entity + key + ".java", writeReadType)
-        javaEntity = generateEntities(key, values)
-        fileEntity.write(javaEntity)
+            fileEntity = open(structure.entity + key + ".java", writeReadType)
+            javaEntity = generateEntities(key, values)
+            fileEntity.write(javaEntity)
 
-        fileDto = open(structure.dto + key + "DTO.java", writeReadType)
-        javaDto = generateDtos(key, values)
-        fileDto.write(javaDto)
+            fileDto = open(structure.dto + key + "DTO.java", writeReadType)
+            javaDto = generateDtos(key, values)
+            fileDto.write(javaDto)
 
-        fileRepository = open(structure.repository + key + "Repository.java", writeReadType)
-        javaRepository = generateRepositories(key, getPrimaryKeyType(values))
-        fileRepository.write(javaRepository)
+            fileRepository = open(structure.repository + key + "Repository.java", writeReadType)
+            javaRepository = generateRepositories(key, getPrimaryKeyType(values))
+            fileRepository.write(javaRepository)
 
-        fileMapperClass = open(structure.mapper + key + "Mapper.java", writeReadType)
-        mapperClass = generateMappers(key, values)
-        fileMapperClass.write(mapperClass)
+            fileMapperClass = open(structure.mapper + key + "Mapper.java", writeReadType)
+            mapperClass = generateMappers(key, values)
+            fileMapperClass.write(mapperClass)
 
-        fileServiceInterface = open(structure.service + key + "Service.java", writeReadType)
-        serviceInterface = generateServiceInterface(key, values)
-        fileServiceInterface.write(serviceInterface)
+            fileServiceInterface = open(structure.service + key + "Service.java", writeReadType)
+            serviceInterface = generateServiceInterface(key, values)
+            fileServiceInterface.write(serviceInterface)
 
-        fileServiceImpl = open(structure.serviceImpl + key + "ServiceImpl.java", writeReadType)
-        serviceImpl = generateService(key, values)
-        fileServiceImpl.write(serviceImpl)
+            fileServiceImpl = open(structure.serviceImpl + key + "ServiceImpl.java", writeReadType)
+            serviceImpl = generateService(key, values)
+            fileServiceImpl.write(serviceImpl)
 
-        fileController = open(structure.controller + key + "Controller.java", writeReadType)
-        controllerClass = generateControllers(key, values)
-        fileController.write(controllerClass)
-        print("")
+            fileController = open(structure.controller + key + "Controller.java", writeReadType)
+            controllerClass = generateControllers(key, values)
+            fileController.write(controllerClass)
+            print("")
 
-    for key, values in enumMap.items():
-        fileEnum = open(structure.entity + key + ".java", writeReadType)
-        javaEnum = generateEnumeration(key, values)
-        fileEnum.write(javaEnum)
+    def enumGenerator(enumMap):
+        for key, values in enumMap.items():
+            fileEnum = open(structure.entity + key + ".java", writeReadType)
+            javaEnum = generateEnumeration(key, values)
+            fileEnum.write(javaEnum)
+
+    settingsCheck(settingsMap)
+    enumGenerator(enumMap)
+    classGenerator(classMap)
 
 def generateMapperInteface():
     print(">> Generating Mapper Interface...\n")

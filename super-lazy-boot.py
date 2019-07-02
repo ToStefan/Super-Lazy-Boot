@@ -8,7 +8,16 @@ enumMap = {}
 settingsMap = {}
 
 def syntaxCheck():
-    pass
+    for key, values in classMap.items():
+        print("        " + key)
+        for value in values:
+            print("          -> " + value.split(":")[0] + " " + value.split(":")[1])
+        print("")
+    for key, values in enumMap.items():
+        print("        " + key + " (enum)")
+        for value in values:
+            print("          -> " + value)
+        print("")
 
 def parser():
 
@@ -28,7 +37,7 @@ def parser():
         enumMap[eachEnum[0]] = eachEnum[1:]
 
     settings = data.split("Settings{")[1].split("}")[0].split(",")
-    print(">> Parsin settings...\n")
+    print(">> Parsing settings...\n")
     for eachSetting in settings:
         eachSetting = eachSetting.split(":")
         settingsMap[eachSetting[0]] = eachSetting[1]
@@ -36,4 +45,9 @@ def parser():
 if __name__ == "__main__":
     clear()
     parser()
-    generator(classMap, enumMap, settingsMap)
+    syntaxCheck()
+    confirm = raw_input("y/n >> ")
+    if(confirm == "y" or confirm == "Y"):
+        generator(classMap, enumMap, settingsMap)
+    else:
+        pass
