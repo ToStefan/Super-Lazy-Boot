@@ -7,7 +7,6 @@ def setSettings(settingsMap):
             lombok = value[0].capitalize()
 
 def generateMapperInteface():
-    print(">> Generating Mapper Interface...\n")
     mapperInterface = ""
 
     # Imports
@@ -23,8 +22,6 @@ def generateMapperInteface():
     return mapperInterface
 
 def generateMappers(className, attributes):
-
-    print(">> Generating mapper for " + className)
     mapperClass = ""
 
     mapperClass += "import java.util.List;\n"
@@ -76,7 +73,6 @@ def generateMappers(className, attributes):
     return mapperClass
 
 def generateEnumeration(enumName, values):
-    print(">> Generating enum: " + enumName)
     javaEnum = ""
 
     javaEnum += "public enum " + enumName + "\n"
@@ -89,7 +85,6 @@ def generateEnumeration(enumName, values):
     return javaEnum
 
 def generateEntities(className, attributes):
-    print(">> Generating class: {className} -> attributes: {attributes}".format(className=className, attributes=attributes))
     javaEntity = "";
     global lombok
 
@@ -149,7 +144,6 @@ def generateEntities(className, attributes):
     return javaEntity
 
 def generateDtos(className, attributes):
-    print(">> Generating DTO: {className}DTO -> attributes: {attributes}".format(className=className, attributes=attributes))
     javaDto = ""
     global lombok
 
@@ -193,7 +187,6 @@ def generateDtos(className, attributes):
     return javaDto
 
 def generateRepositories(className, primaryKeyType):
-    print(">> Generating repository for " + className + " -> ID type: " + primaryKeyType)
     javaRepository = ""
 
     # Imports
@@ -208,7 +201,6 @@ def generateRepositories(className, primaryKeyType):
     return javaRepository
 
 def generateServiceInterface(className, attributes):
-    print(">> Generating service interface for " + className)
     serviceInterface = ""
 
     # Imports
@@ -225,7 +217,6 @@ def generateServiceInterface(className, attributes):
     return serviceInterface
 
 def generateService(className, attributes):
-    print(">> Generating service for " + className)
     serviceImpl = ""
     global lombok
     
@@ -277,7 +268,6 @@ def generateService(className, attributes):
     return serviceImpl
 
 def generateControllers(className, attributes):
-    print(">> Generating controller for " + className)
     controllerClass = ""
     global lombok
 
