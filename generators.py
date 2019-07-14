@@ -1,81 +1,96 @@
-lombok = False
+import structure
 
-def setSettings(settingsMap):
-    for key, value in settingsMap.items():
+from utils import cap_first
+
+lombok = False
+root_package = ""
+
+def set_settings(settings_map):
+    for key, value in settings_map.items():
         if(key == "lombok"):
             global lombok
             lombok = eval(value[0].capitalize())
+        if(key == "rootPackage"):
+            global root_package
+            root_package = value[0]
 
-def generateMapperInteface():
-    mapperInterface = ""
+def generate_mapper_inteface():
+    global root_package
+    mapper_interface = "package " + root_package + structure.mapper_package + ";\n\n"
 
     # Imports
-    mapperInterface += "import java.util.List;\n\n"
+    mapper_interface += "import java.util.List;\n\n"
 
     # Methods
-    mapperInterface += "public interface Mapper<E, DTO> {\n\n"
-    mapperInterface += "    DTO toDTO(E entity);\n"
-    mapperInterface += "    E toEntity(DTO dto);\n"
-    mapperInterface += "    List<DTO> toDTO(List<E> entities);\n"
-    mapperInterface += "    List<E> toEntity(List<DTO> dtos);\n\n"
-    mapperInterface += "}\n"
-    return mapperInterface
+    mapper_interface += "public interface Mapper<E, DTO> {\n\n"
+    mapper_interface += "    DTO toDTO(E entity);\n"
+    mapper_interface += "    E toEntity(DTO dto);\n"
+    mapper_interface += "    List<DTO> toDTO(List<E> entities);\n"
+    mapper_interface += "    List<E> toEntity(List<DTO> dtos);\n\n"
+    mapper_interface += "}\n"
+    return mapper_interface
 
-def generateMappers(className, attributes):
-    mapperClass = ""
+def generate_mappers(class_name, attributes):
+    global root_package
+    mapper_class = "package " + root_package + structure.mapper_package + ";\n\n"
 
-    mapperClass += "import java.util.List;\n"
-    mapperClass += "import java.util.stream.Collectors;\n"
-    mapperClass += "import org.springframework.stereotype.Component;\n\n"
+    # Imports
+    mapper_class += "import java.util.List;\n"
+    mapper_class += "import java.util.stream.Collectors;\n"
+    mapper_class += "import org.springframework.stereotype.Component;\n"
+    mapper_class += "import " + root_package + structure.entity_package + "." + class_name + ";\n"
+    mapper_class += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
 
-    mapperClass += "@Component\n"
-    mapperClass += "public class " + className + "Mapper implements Mapper<" + className + ", " + className + "DTO> {\n\n"
+    # Class header
+    mapper_class += "@Component\n"
+    mapper_class += "public class " + class_name + "Mapper implements Mapper<" + class_name + ", " + class_name + "DTO> {\n\n"
 
     #toDTO -> DTO
-    mapperClass += "    @Override\n"
-    mapperClass += "    public " + className + "DTO toDTO(" + className + " " + className.lower() + ") {\n"
-    mapperClass += "        " + className + "DTO dto = new " + className + "DTO();\n"
+    mapper_class += "    @Override\n"
+    mapper_class += "    public " + class_name + "DTO toDTO(" + class_name + " " + class_name.lower() + ") {\n"
+    mapper_class += "        " + class_name + "DTO dto = new " + class_name + "DTO();\n"
     for att in attributes:
         attribute = att.split(":")
-        mapperClass += "        dto.set" + attribute[1].capitalize() + "(" + className.lower() + ".get" + attribute[1].capitalize() + "());\n"
-    mapperClass += "        return dto;\n"
-    mapperClass += "    }\n\n"
+        mapper_class += "        dto.set" + cap_first(attribute[1]) + "(" + class_name.lower() + ".get" + cap_first(attribute[1]) + "());\n"
+    mapper_class += "        return dto;\n"
+    mapper_class += "    }\n\n"
 
     #toDTO -> List<DTO>
-    mapperClass += "    @Override\n"
-    mapperClass += "    public List<" + className + "DTO> toDTO(List<" + className + "> entities) {\n"
-    mapperClass += "        return entities\n"
-    mapperClass += "                    .stream()\n"
-    mapperClass += "                    .map(" + className.lower() + " -> toDTO(" + className.lower() + "))\n"
-    mapperClass += "                    .collect(Collectors.toList());\n"
-    mapperClass += "    }\n\n"
+    mapper_class += "    @Override\n"
+    mapper_class += "    public List<" + class_name + "DTO> toDTO(List<" + class_name + "> entities) {\n"
+    mapper_class += "        return entities\n"
+    mapper_class += "                    .stream()\n"
+    mapper_class += "                    .map(" + class_name.lower() + " -> toDTO(" + class_name.lower() + "))\n"
+    mapper_class += "                    .collect(Collectors.toList());\n"
+    mapper_class += "    }\n\n"
 
     #toEntity -> Entity
-    mapperClass += "    @Override\n"
-    mapperClass += "    public " + className + " toEntity(" + className + "DTO " + className.lower() + "DTO) {\n"
-    mapperClass += "        " + className + " entity = new " + className + "();\n"
+    mapper_class += "    @Override\n"
+    mapper_class += "    public " + class_name + " toEntity(" + class_name + "DTO " + class_name.lower() + "DTO) {\n"
+    mapper_class += "        " + class_name + " entity = new " + class_name + "();\n"
     for att in attributes:
         attribute = att.split(":")
-        mapperClass += "        entity.set" + attribute[1].capitalize() + "(" + className.lower() + "DTO.get" \
-                                                                                + attribute[1].capitalize() + "());\n"
-    mapperClass += "        return entity;\n"
-    mapperClass += "    }\n\n"
+        mapper_class += "        entity.set" + cap_first(attribute[1]) + "(" + class_name.lower() + "DTO.get" \
+                                                                                + cap_first(attribute[1]) + "());\n"
+    mapper_class += "        return entity;\n"
+    mapper_class += "    }\n\n"
 
     #toEntity -> List<Entity>
-    mapperClass += "    @Override\n"
-    mapperClass += "    public List<" + className + "> toEntity(List<" + className + "DTO> dtos) {\n"
-    mapperClass += "        return dtos\n"
-    mapperClass += "                    .stream()\n"
-    mapperClass += "                    .map(" + className.lower() + "DTO -> toEntity(" + className.lower() + "DTO))\n"
-    mapperClass += "                    .collect(Collectors.toList());\n"
-    mapperClass += "    }\n\n"
-    mapperClass += "}"
-    return mapperClass
+    mapper_class += "    @Override\n"
+    mapper_class += "    public List<" + class_name + "> toEntity(List<" + class_name + "DTO> dtos) {\n"
+    mapper_class += "        return dtos\n"
+    mapper_class += "                    .stream()\n"
+    mapper_class += "                    .map(" + class_name.lower() + "DTO -> toEntity(" + class_name.lower() + "DTO))\n"
+    mapper_class += "                    .collect(Collectors.toList());\n"
+    mapper_class += "    }\n\n"
+    mapper_class += "}"
+    return mapper_class
 
-def generateEnumeration(enumName, values):
-    javaEnum = ""
+def generate_enumeration(enumName, values):
+    global root_package
+    javaEnum = "package " + root_package + structure.entity_package + ";\n\n"
 
-    javaEnum += "public enum " + enumName + "\n"
+    javaEnum += "public enum " + enumName + "{\n"
     for enum in values:
         if values.index(enum) == len(values)-1:
             javaEnum += "    " + enum + "\n"
@@ -84,248 +99,275 @@ def generateEnumeration(enumName, values):
     javaEnum += "}\n"
     return javaEnum
 
-def generateEntities(className, attributes):
-    javaEntity = "";
+def generate_entities(class_name, attributes):
     global lombok
+    global root_package
+    java_entity = "package " + root_package + structure.entity_package + ";\n\n"
 
     # Imports
-    javaEntity += "import javax.persistence.Entity;\n"
-    javaEntity += "import javax.persistence.GeneratedValue;\n"
-    javaEntity += "import javax.persistence.GenerationType;\n"
-    javaEntity += "import javax.persistence.Id;\n"
-    javaEntity += "import javax.persistence.Table;\n\n"
+    java_entity += "import javax.persistence.Entity;\n"
+    java_entity += "import javax.persistence.GeneratedValue;\n"
+    java_entity += "import javax.persistence.GenerationType;\n"
+    java_entity += "import javax.persistence.Id;\n"
+    java_entity += "import javax.persistence.Table;\n\n"
     if(lombok) == True:
-        javaEntity += "import lombok.Getter;\n"
-        javaEntity += "import lombok.Setter;\n"
-        javaEntity += "import lombok.NoArgsConstructor;\n\n"
+        java_entity += "import lombok.Getter;\n"
+        java_entity += "import lombok.Setter;\n"
+        java_entity += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header
     if(lombok) == True:
-        javaEntity += "@Getter\n"
-        javaEntity += "@Setter\n"
-        javaEntity += "@NoArgsConstructor\n"
-    javaEntity += "@Entity\n"
-    javaEntity += "@Table(name = \"{classNameLowerCase}\")".format(classNameLowerCase=className.lower()) + "\n"
-    javaEntity += "public class " + className + " {\n"
-    javaEntity += "\n"
+        java_entity += "@Getter\n"
+        java_entity += "@Setter\n"
+        java_entity += "@NoArgsConstructor\n"
+    java_entity += "@Entity\n"
+    java_entity += "@Table(name = \"{class_nameLowerCase}\")".format(class_nameLowerCase=class_name.lower()) + "\n"
+    java_entity += "public class " + class_name + " {\n"
+    java_entity += "\n"
     
     # Attributes
     for att in attributes:
         attribute = att.split(":")
         try:
             if(attribute[2] == "primary"):
-                javaEntity += "    @Id\n"
-                javaEntity += "    @GeneratedValue(strategy = GenerationType.IDENTITY)\n"
-                javaEntity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
+                java_entity += "    @Id\n"
+                java_entity += "    @GeneratedValue(strategy = GenerationType.IDENTITY)\n"
+                java_entity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
         except:
-            javaEntity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
-        javaEntity += "\n"
+            java_entity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
+        java_entity += "\n"
             
     if(lombok) == False:
         # Default constructor
-        javaEntity += "    public " + className + "() {\n"
-        javaEntity += "\n"
-        javaEntity += "    }\n"
-        javaEntity += "\n"
+        java_entity += "    public " + class_name + "() {\n"
+        java_entity += "\n"
+        java_entity += "    }\n"
+        java_entity += "\n"
 
         # Getters/Setters
         for att in attributes:
             attribute = att.split(":")
-            javaEntity += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
-            javaEntity += "        return " + attribute[1] + ";\n"
-            javaEntity += "    }\n"
-            javaEntity += "\n"
-            javaEntity += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
-            javaEntity += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
-            javaEntity += "    }\n"
-            javaEntity += "\n"
-    javaEntity += "}"
+            java_entity += "    public " + attribute[0] + " get" + cap_first(attribute[1]) + "() {\n"
+            java_entity += "        return " + attribute[1] + ";\n"
+            java_entity += "    }\n"
+            java_entity += "\n"
+            java_entity += "    public void set" + cap_first(attribute[1]) + "(" + attribute[0] + " " + attribute[1] + ") {\n"
+            java_entity += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
+            java_entity += "    }\n"
+            java_entity += "\n"
+    java_entity += "}"
 
-    return javaEntity
+    return java_entity
 
-def generateDtos(className, attributes):
-    javaDto = ""
+def generate_enums_import(class_name, class_map, enum_map):
+    enums_import = ""
+    for class_key, class_values in class_map.items():
+        if(class_key == class_name):
+            for class_value in class_values:
+                for enum_key, enum_values in enum_map.items():
+                    if(class_value.split(":")[0] == enum_key):
+                        enums_import += "import " + root_package + structure.entity_package + "." + enum_key + ";\n"
+    return enums_import
+
+def generate_dtos(class_name, attributes, enums_import):
     global lombok
+    global root_package
+    java_dto = "package " + root_package + structure.dto_package + ";\n\n"
 
     # Imports
     if(lombok) == True:
-        javaDto += "import lombok.Getter;\n"
-        javaDto += "import lombok.Setter;\n"
-        javaDto += "import lombok.NoArgsConstructor;\n\n"
+        java_dto += "import lombok.Getter;\n"
+        java_dto += "import lombok.Setter;\n"
+        java_dto += "import lombok.NoArgsConstructor;\n"
+    java_dto += enums_import
+    java_dto += "\n"
 
     # Class header
     if(lombok) == True:
-        javaDto += "@Getter\n"
-        javaDto += "@Setter\n"
-        javaDto += "@NoArgsConstructor\n"
-    javaDto += "public class " + className + "DTO {\n\n"
+        java_dto += "@Getter\n"
+        java_dto += "@Setter\n"
+        java_dto += "@NoArgsConstructor\n"
+    java_dto += "public class " + class_name + "DTO {\n\n"
 
     # Attributes
     for att in attributes:
         attribute = att.split(":")
-        javaDto += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
+        java_dto += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
 
-        # Default constructor
+    # Default constructor
+    java_dto += "\n"
     if(lombok) == False:
-        javaDto += "    public " + className + "() {\n"
-        javaDto += "\n"
-        javaDto += "    }\n"
-        javaDto += "\n"
+        java_dto += "    public " + class_name + "DTO() {\n"
+        java_dto += "\n"
+        java_dto += "    }\n"
+        java_dto += "\n"
 
         # Getters/Setters
         for att in attributes:
             attribute = att.split(":")
-            javaDto += "    public " + attribute[0] + " get" + attribute[1].capitalize() + "() {\n"
-            javaDto += "        return " + attribute[1] + ";\n"
-            javaDto += "    }\n"
-            javaDto += "\n"
-            javaDto += "    public void set" + attribute[1].capitalize() + "(" + attribute[0] + " " + attribute[1] + ") {\n"
-            javaDto += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
-            javaDto += "    }\n"
-            javaDto += "\n"
-    javaDto += "}"
-    return javaDto
+            java_dto += "    public " + attribute[0] + " get" + cap_first(attribute[1]) + "() {\n"
+            java_dto += "        return " + attribute[1] + ";\n"
+            java_dto += "    }\n"
+            java_dto += "\n"
+            java_dto += "    public void set" + cap_first(attribute[1]) + "(" + attribute[0] + " " + attribute[1] + ") {\n"
+            java_dto += "        this." + attribute[1] + " = " + attribute[1] + ";\n"
+            java_dto += "    }\n"
+            java_dto += "\n"
+    java_dto += "}"
+    return java_dto
 
-def generateRepositories(className, primaryKeyType):
-    javaRepository = ""
+def generate_repositories(class_name, primaryKeyType):
+    global root_package
+    java_repository = "package " + root_package + structure.repository_package + ";\n\n"
 
     # Imports
-    javaRepository += "import org.springframework.data.jpa.repository.JpaRepository;\n"
-    javaRepository += "import org.springframework.stereotype.Repository;\n\n"
+    java_repository += "import org.springframework.data.jpa.repository.JpaRepository;\n"
+    java_repository += "import org.springframework.stereotype.Repository;\n"
+    java_repository += "import " + root_package + structure.entity_package + "." + class_name + ";\n\n"
 
     # Interface header
-    javaRepository += "@Repository\n"
-    javaRepository += "public interface " + className + "Repository extends JpaRepository<" + className + ", " + primaryKeyType + "> {\n"
-    javaRepository += "\n"
-    javaRepository += "}"
-    return javaRepository
+    java_repository += "@Repository\n"
+    java_repository += "public interface " + class_name + "Repository extends JpaRepository<" + class_name + ", " + primaryKeyType + "> {\n"
+    java_repository += "\n"
+    java_repository += "}"
+    return java_repository
 
-def generateServiceInterface(className, attributes):
-    serviceInterface = ""
+def generate_service_interface(class_name, attributes):
+    global root_package
+    service_interface = "package " + root_package + structure.service_package + ";\n\n"
 
     # Imports
-    serviceInterface += "import java.util.List;\n\n"
+    service_interface += "import java.util.List;\n"
+    service_interface += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
 
     # Methods
-    serviceInterface += "public interface " + className + "Service {\n\n"
-    serviceInterface += "    List<" + className + "DTO> findAll();\n"
-    serviceInterface += "    " + className + "DTO findById(Long id);\n"
-    serviceInterface += "    " + className + "DTO create(" + className + "DTO " + className.lower() + "DTO);\n"
-    serviceInterface += "    " + className + "DTO update(" + className + "DTO " + className.lower() + "DTO);\n"
-    serviceInterface += "    void remove(Long id);\n\n"
-    serviceInterface += "}\n\n"
-    return serviceInterface
+    service_interface += "public interface " + class_name + "Service {\n\n"
+    service_interface += "    List<" + class_name + "DTO> findAll();\n"
+    service_interface += "    " + class_name + "DTO findById(Long id);\n"
+    service_interface += "    " + class_name + "DTO create(" + class_name + "DTO " + class_name.lower() + "DTO);\n"
+    service_interface += "    " + class_name + "DTO update(" + class_name + "DTO " + class_name.lower() + "DTO);\n"
+    service_interface += "    void remove(Long id);\n\n"
+    service_interface += "}\n\n"
+    return service_interface
 
-def generateService(className, attributes):
-    serviceImpl = ""
+def generate_service(class_name, attributes):
     global lombok
+    global root_package
+    service_impl = "package " + root_package + structure.service_impl_package + ";\n\n"
     
     # Imports
-    serviceImpl += "import java.util.List;\n"
-    serviceImpl += "import org.springframework.beans.factory.annotation.Autowired;\n"
-    serviceImpl += "import org.springframework.stereotype.Service;\n\n"
+    service_impl += "import java.util.List;\n"
+    service_impl += "import org.springframework.beans.factory.annotation.Autowired;\n"
+    service_impl += "import org.springframework.stereotype.Service;\n"
+    service_impl += "import " + root_package + structure.repository_package + "." + class_name + "Repository;\n"
+    service_impl += "import " + root_package + structure.service_package + "." + class_name + "Service;\n"
+    service_impl += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n"
+    service_impl += "import " + root_package + structure.mapper_package + "." + class_name + "Mapper;\n\n"
     if(lombok) == True:
-        serviceImpl += "import lombok.NoArgsConstructor;\n\n"
+        service_impl += "import lombok.NoArgsConstructor;\n\n" 
 
     # Class header & dependency injection
     if(lombok) == True:
-        serviceImpl += "@AllArgsConstructor\n"
-    serviceImpl += "@Service\n"
-    serviceImpl += "public class " + className + "ServiceImpl implements " + className + "Service {\n\n"
+        service_impl += "@AllArgsConstructor\n"
+    service_impl += "@Service\n"
+    service_impl += "public class " + class_name + "ServiceImpl implements " + class_name + "Service {\n\n"
     if(lombok) == True:
-        serviceImpl += "    private final " + className + "Repository " + className.lower() + "Repository;\n"
-        serviceImpl += "    private final " + className + "Mapper " + className.lower() + "Mapper;\n\n"
+        service_impl += "    private final " + class_name + "Repository " + class_name.lower() + "Repository;\n"
+        service_impl += "    private final " + class_name + "Mapper " + class_name.lower() + "Mapper;\n\n"
     else:
-        serviceImpl += "    @Autowired\n"
-        serviceImpl += "    private " + className + "Repository " + className.lower() + "Repository;\n\n"
-        serviceImpl += "    @Autowired\n"
-        serviceImpl += "    private " + className + "Mapper " + className.lower() + "Mapper;\n\n"
+        service_impl += "    @Autowired\n"
+        service_impl += "    private " + class_name + "Repository " + class_name.lower() + "Repository;\n\n"
+        service_impl += "    @Autowired\n"
+        service_impl += "    private " + class_name + "Mapper " + class_name.lower() + "Mapper;\n\n"
 
     # Methods
-    serviceImpl += "    @Override\n"
-    serviceImpl += "    public List<" + className + "DTO> findAll() {\n"
-    serviceImpl += "        return " + className.lower() + "Mapper.toDTO(" + className.lower() + "Repository.findAll());\n"
-    serviceImpl += "    }\n\n"
-    serviceImpl += "    @Override\n"
-    serviceImpl += "    public " + className + "DTO findById(Long id) {\n"
-    serviceImpl += "        return " + className.lower() +"Mapper.toDTO(" + className.lower() + "Repository.getOne(id));\n"
-    serviceImpl += "    }\n\n"
-    serviceImpl += "    @Override\n"
-    serviceImpl += "    public " + className + "DTO create(" + className + "DTO " + className.lower() + "DTO) {\n"
-    serviceImpl += "        return " + className.lower() + "Mapper.toDTO(" + className.lower() + "Repository.save(" + \
-                                                    className.lower() + "Mapper.toEntity(" + className.lower() + "DTO)));\n"
-    serviceImpl += "    }\n\n"
-    serviceImpl += "    @Override\n"
-    serviceImpl += "    public " + className + "DTO update(" + className + "DTO " + className.lower() + "DTO) {\n"
-    serviceImpl += "        return " + className.lower() + "Mapper.toDTO(" + className.lower() + "Repository.save(" + \
-                                                    className.lower() + "Mapper.toEntity(" + className.lower() + "DTO)));\n"
-    serviceImpl += "    }\n\n"
-    serviceImpl += "    @Override\n"
-    serviceImpl += "    public void remove(Long " + className.lower() + "Id) {\n"
-    serviceImpl += "        " + className.lower() + "Repository.deleteById(" + className.lower() + "Id);\n"
-    serviceImpl += "    }\n\n"
-    serviceImpl += "}"
-    return serviceImpl
+    service_impl += "    @Override\n"
+    service_impl += "    public List<" + class_name + "DTO> findAll() {\n"
+    service_impl += "        return " + class_name.lower() + "Mapper.toDTO(" + class_name.lower() + "Repository.findAll());\n"
+    service_impl += "    }\n\n"
+    service_impl += "    @Override\n"
+    service_impl += "    public " + class_name + "DTO findById(Long id) {\n"
+    service_impl += "        return " + class_name.lower() +"Mapper.toDTO(" + class_name.lower() + "Repository.getOne(id));\n"
+    service_impl += "    }\n\n"
+    service_impl += "    @Override\n"
+    service_impl += "    public " + class_name + "DTO create(" + class_name + "DTO " + class_name.lower() + "DTO) {\n"
+    service_impl += "        return " + class_name.lower() + "Mapper.toDTO(" + class_name.lower() + "Repository.save(" + \
+                                                    class_name.lower() + "Mapper.toEntity(" + class_name.lower() + "DTO)));\n"
+    service_impl += "    }\n\n"
+    service_impl += "    @Override\n"
+    service_impl += "    public " + class_name + "DTO update(" + class_name + "DTO " + class_name.lower() + "DTO) {\n"
+    service_impl += "        return " + class_name.lower() + "Mapper.toDTO(" + class_name.lower() + "Repository.save(" + \
+                                                    class_name.lower() + "Mapper.toEntity(" + class_name.lower() + "DTO)));\n"
+    service_impl += "    }\n\n"
+    service_impl += "    @Override\n"
+    service_impl += "    public void remove(Long " + class_name.lower() + "Id) {\n"
+    service_impl += "        " + class_name.lower() + "Repository.deleteById(" + class_name.lower() + "Id);\n"
+    service_impl += "    }\n\n"
+    service_impl += "}"
+    return service_impl
 
-def generateControllers(className, attributes):
-    controllerClass = ""
+def generate_controllers(class_name, attributes):
     global lombok
+    global root_package
+    controller_class = "package " + root_package + structure.controller_package + ";\n\n"
 
     # Imports
-    controllerClass += "import java.util.List;\n"
-    controllerClass += "import org.springframework.beans.factory.annotation.Autowired;\n"
-    controllerClass += "import org.springframework.http.HttpStatus;\n"
-    controllerClass += "import org.springframework.http.ResponseEntity;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.DeleteMapping;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.GetMapping;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.PathVariable;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.PostMapping;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.PutMapping;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.RequestBody;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.RequestMapping;\n"
-    controllerClass += "import org.springframework.web.bind.annotation.RestController;\n\n"
+    controller_class += "import java.util.List;\n"
+    controller_class += "import org.springframework.beans.factory.annotation.Autowired;\n"
+    controller_class += "import org.springframework.http.HttpStatus;\n"
+    controller_class += "import org.springframework.http.ResponseEntity;\n"
+    controller_class += "import org.springframework.web.bind.annotation.DeleteMapping;\n"
+    controller_class += "import org.springframework.web.bind.annotation.GetMapping;\n"
+    controller_class += "import org.springframework.web.bind.annotation.PathVariable;\n"
+    controller_class += "import org.springframework.web.bind.annotation.PostMapping;\n"
+    controller_class += "import org.springframework.web.bind.annotation.PutMapping;\n"
+    controller_class += "import org.springframework.web.bind.annotation.RequestBody;\n"
+    controller_class += "import org.springframework.web.bind.annotation.RequestMapping;\n"
+    controller_class += "import org.springframework.web.bind.annotation.RestController;\n"
+    controller_class += "import " + root_package + structure.service_impl_package + "." + class_name + "ServiceImpl;\n"
+    controller_class += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
     if(lombok) == True:
-        controllerClass += "import lombok.NoArgsConstructor;\n\n"
+        controller_class += "import lombok.NoArgsConstructor;\n\n"
 
     # Class header & dependency injection
     if(lombok) == True:
-        controllerClass += "@AllArgsConstructor\n"
-    controllerClass += "@RestController\n"
-    controllerClass += "@RequestMapping(value = \"/api/" + className.lower() + "\")\n"
-    controllerClass += "public class " + className + "Controller {\n\n"
+        controller_class += "@AllArgsConstructor\n"
+    controller_class += "@RestController\n"
+    controller_class += "@RequestMapping(value = \"/api/" + class_name.lower() + "\")\n"
+    controller_class += "public class " + class_name + "Controller {\n\n"
     if(lombok) == True:
-        controllerClass += "    private final " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
+        controller_class += "    private final " + class_name + "ServiceImpl " + class_name.lower() + "Service;\n\n"
     else:
-        controllerClass += "    @Autowired\n"
-        controllerClass += "    private " + className + "ServiceImpl " + className.lower() + "Service;\n\n"
+        controller_class += "    @Autowired\n"
+        controller_class += "    private " + class_name + "ServiceImpl " + class_name.lower() + "Service;\n\n"
 
     # Controllers
-    controllerClass += "    @GetMapping\n"
-    controllerClass += "    public ResponseEntity<List<" + className + "DTO>> findAll() {\n"
-    controllerClass += "         List<" + className + "DTO> dtos = " + className.lower() + "Service.findAll();\n"
-    controllerClass += "         return new ResponseEntity<>(dtos, HttpStatus.OK);\n"
-    controllerClass += "    }\n\n"
-    controllerClass += "    @GetMapping(value = \"/{id}\")\n"
-    controllerClass += "    public ResponseEntity<" + className + "DTO> findById(@PathVariable(\"id\") Long id) {\n"
-    controllerClass += "        " + className + "DTO dtos = " + className.lower() + "Service.findById(id);\n"
-    controllerClass += "        return new ResponseEntity<>(dtos, HttpStatus.OK);\n"
-    controllerClass += "    }\n\n"
-    controllerClass += "    @PostMapping\n"
-    controllerClass += "    public ResponseEntity<" + className + "DTO> create(@RequestBody " + \
-                                                                className + "DTO " + className.lower() + "DTO) {\n"
-    controllerClass += "        " + className + "DTO retVal = " + className.lower() + "Service.create(" + className.lower() + "DTO);\n"
-    controllerClass += "        return new ResponseEntity<>(retVal, HttpStatus.OK);\n"
-    controllerClass += "    }\n\n"
-    controllerClass += "    @PutMapping\n"
-    controllerClass += "    public ResponseEntity<" + className + "DTO> update(@RequestBody " + \
-                                                                className + "DTO " + className.lower() + "DTO) {\n"
-    controllerClass += "        " + className + "DTO retVal = " + className.lower() + "Service.update(" + className.lower() + "DTO);\n"
-    controllerClass += "        return new ResponseEntity<>(retVal, HttpStatus.OK);\n"
-    controllerClass += "    }\n\n"
-    controllerClass += "    @DeleteMapping(value = \"/{id}\")\n"
-    controllerClass += "    public ResponseEntity<HttpStatus> delete(@PathVariable(\"id\") Long id) {\n"
-    controllerClass += "        " + className.lower() + "Service.remove(id);\n"
-    controllerClass += "        return new ResponseEntity<>(HttpStatus.OK);\n"
-    controllerClass += "    }\n\n"
-    controllerClass += "}"
-    return controllerClass
+    controller_class += "    @GetMapping\n"
+    controller_class += "    public ResponseEntity<List<" + class_name + "DTO>> findAll() {\n"
+    controller_class += "         List<" + class_name + "DTO> dtos = " + class_name.lower() + "Service.findAll();\n"
+    controller_class += "         return new ResponseEntity<>(dtos, HttpStatus.OK);\n"
+    controller_class += "    }\n\n"
+    controller_class += "    @GetMapping(value = \"/{id}\")\n"
+    controller_class += "    public ResponseEntity<" + class_name + "DTO> findById(@PathVariable(\"id\") Long id) {\n"
+    controller_class += "        " + class_name + "DTO dto = " + class_name.lower() + "Service.findById(id);\n"
+    controller_class += "        return new ResponseEntity<>(dto, HttpStatus.OK);\n"
+    controller_class += "    }\n\n"
+    controller_class += "    @PostMapping\n"
+    controller_class += "    public ResponseEntity<" + class_name + "DTO> create(@RequestBody " + \
+                                                                class_name + "DTO " + class_name.lower() + "DTO) {\n"
+    controller_class += "        " + class_name + "DTO retVal = " + class_name.lower() + "Service.create(" + class_name.lower() + "DTO);\n"
+    controller_class += "        return new ResponseEntity<>(retVal, HttpStatus.OK);\n"
+    controller_class += "    }\n\n"
+    controller_class += "    @PutMapping\n"
+    controller_class += "    public ResponseEntity<" + class_name + "DTO> update(@RequestBody " + \
+                                                                class_name + "DTO " + class_name.lower() + "DTO) {\n"
+    controller_class += "        " + class_name + "DTO retVal = " + class_name.lower() + "Service.update(" + class_name.lower() + "DTO);\n"
+    controller_class += "        return new ResponseEntity<>(retVal, HttpStatus.OK);\n"
+    controller_class += "    }\n\n"
+    controller_class += "    @DeleteMapping(value = \"/{id}\")\n"
+    controller_class += "    public ResponseEntity<HttpStatus> delete(@PathVariable(\"id\") Long id) {\n"
+    controller_class += "        " + class_name.lower() + "Service.remove(id);\n"
+    controller_class += "        return new ResponseEntity<>(HttpStatus.OK);\n"
+    controller_class += "    }\n\n"
+    controller_class += "}"
+    return controller_class

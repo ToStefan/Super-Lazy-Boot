@@ -1,48 +1,48 @@
 import sys
 
 from writers import writer
-from generators import setSettings
-from utils import clear
+from generators import set_settings
+from utils import clear, cap_first
 
-classMap = {}
-enumMap = {}
-settingsMap = {}
+class_map = {}
+enum_map = {}
+settings_map = {}
 
 def main():
     parser()
     print("")
-    syntaxCheck()
+    syntax_check()
     print("")
     confirm = raw_input("y/n >> ")
     if(confirm == "y" or confirm == "Y"):
-        setSettings(settingsMap)
-        writer(classMap, enumMap)
+        set_settings(settings_map)
+        writer(class_map, enum_map)
     else:
         pass
 
-def syntaxCheck():
+def syntax_check():
     print(">> Syntax check...")
 
-    def classCheck():
-        for key, values in classMap.items():
+    def class_check():
+        for key, values in class_map.items():
             print("    " + key + " (class)")
             for value in values:
                 print("      -> " + value.split(":")[0] + " " + value.split(":")[1])
             print("")
 
-    def enumCheck():
-        for key, values in enumMap.items():
+    def enum_check():
+        for key, values in enum_map.items():
             print("    " + key + " (enum)")
             for value in values:
                 print("      -> " + value)
             print("")
 
-    def settingsCheck():
-        for key, value in settingsMap.items():
+    def settings_check():
+        for key, value in settings_map.items():
             print("    " + key + " -> " + value[0])
-            if(key != "security"):
+            if(key != "security" and key != "rootPackage"):
                 try:
-                    eval(value[0].capitalize())
+                    eval(cap_first(value[0]))
                 except NameError as e:
                     raise SyntaxError(key + " value must be true or false")
             elif(key == "security"):
@@ -51,9 +51,9 @@ def syntaxCheck():
         print("")
 
     try:
-        settingsCheck()
-        classCheck()
-        enumCheck()
+        settings_check()
+        class_check()
+        enum_check()
     except SyntaxError as e:
         print("        ERROR: " + str(e))
         raise SystemExit(0)
@@ -63,54 +63,60 @@ def parser():
     with open(sys.argv[1], 'r') as file:
         data = file.read().replace(" ", "").replace("\n", "").replace("\t", "").rstrip()
 
-    def classParser(data):
+    def class_parser(data):
         try:
             classes = data.split("Class{")[1].split("}")[0].split(",")
-            for eachClass in classes:
-                if(eachClass == ""):
+            for each_class in classes:
+                if(each_class == ""):
                     print("    INFO: Comma at end of class declaration detected")
                 else:
-                    eachClass = eachClass.split("->")
-                    classMap[eachClass[0]] = eachClass[1:]
+                    each_class = each_class.split("->")
+                    class_map[each_class[0]] = each_class[1:]
         except IndexError:
             print("    INFO: No classes specified")
             raise SystemExit(0)
         
 
-    def enumParser(data):
+    def enum_parser(data):
         try:
             enums = data.split("Enum{")[1].split("}")[0].split(",")
-            for eachEnum in enums:
-                if(eachEnum == ""):
+            for each_enum in enums:
+                if(each_enum == ""):
                     print("    INFO: Comma at end of enum declaration detected")
                 else:
-                    eachEnum = eachEnum.split("->")
-                    enumMap[eachEnum[0]] = eachEnum[1:]
+                    each_enum = each_enum.split("->")
+                    enum_map[each_enum[0]] = each_enum[1:]
         except IndexError:
             print("    INFO: No enums specified")
         
 
-    def settingsParser(data):
+    def settings_parser(data):
+        root_package_exist = False
         try:
             settings = data.split("Settings{")[1].split("}")[0].split(",")
             if(settings[0] == ""):
                 print("    INFO: No settings specified")
             else:
-                for eachSetting in settings:
-                    if(eachSetting == ""):
+                for each_setting in settings:
+                    if(each_setting == ""):
                         print("    INFO: Comma at end of settings declaration detected")
                     else:
-                        eachSetting = eachSetting.split(":")
-                        settingsMap[eachSetting[0]] = eachSetting[1:]
+                        each_setting = each_setting.split(":")
+                        settings_map[each_setting[0]] = each_setting[1:]
+                        if(each_setting[0] == "rootPackage"):
+                            root_package_exist = True
+                if(root_package_exist == False):
+                    print("    ERROR: No 'rootPackage' in Settings found!")
+                    raise SystemExit(0)
         except IndexError:
             print("    INFO: No settings specified")
 
     print(">> Parsing classes...")
-    classParser(data)
+    class_parser(data)
     print(">> Parsing enums...")
-    enumParser(data)
+    enum_parser(data)
     print(">> Parsing settings...")
-    settingsParser(data)
+    settings_parser(data)
     
 
 if __name__ == "__main__":

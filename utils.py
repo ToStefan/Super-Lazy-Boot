@@ -1,6 +1,6 @@
 import os
 
-def getPrimaryKeyType(attributes):
+def get_primary_key_type(attributes):
     for att in attributes:
         attribute = att.split(":")
         try:
@@ -14,3 +14,6 @@ def clear():
 		os.system("clear")
 	else:
 		os.system("cls")
+
+def cap_first(s):
+    return s[:1].upper() + s[1:]

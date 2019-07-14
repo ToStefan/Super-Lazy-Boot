@@ -25,6 +25,7 @@ Class {
 
 Settings {
 	lombok:true (default: false)
+	rootPackage: * (error if not specified)
 }
 
 
@@ -38,7 +39,7 @@ This model will create you all basic CRUD operations for controllers also will g
 
 keyword "primary" is for primary key column.
 
-The script will generate the most import commands, but some you need to mannualy like a package declaration and all the imports based on the project package.
+The script will generate the most import commands.
 
 If you don't specify settings default values will be used.
 
