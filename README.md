@@ -39,9 +39,7 @@ This model will create you all basic CRUD operations for controllers also will g
 
 keyword "primary" is for primary key column.
 
-The script will generate the most import commands.
-
-If you don't specify settings default values will be used.
+If you don't specify settings value, default values will be used.
 
 Model file can be with any extension.
 
