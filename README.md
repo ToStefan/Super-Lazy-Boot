@@ -25,7 +25,7 @@ Class {
 
 Settings {
 	lombok:true (default: false)
-	rootPackage: * (error if not specified)
+	rootPackage: / (rootPackage must be specified or will throw error)
 }
 
 

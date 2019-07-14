@@ -109,7 +109,8 @@ def parser():
                     print("    ERROR: No 'rootPackage' in Settings found!")
                     raise SystemExit(0)
         except IndexError:
-            print("    INFO: No settings specified")
+            print("    ERROR: No settings specified")
+            raise SystemExit(0)
 
     print(">> Parsing classes...")
     class_parser(data)
