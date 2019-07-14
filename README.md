@@ -48,5 +48,5 @@ Model file can be with any extension.
 + Generating on web platform
 + Exception handling
 + Spring Security
-+ Nested resrouces
++ Nested resources
 + Pagination
