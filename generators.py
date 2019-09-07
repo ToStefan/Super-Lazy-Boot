@@ -1,22 +1,29 @@
-import structure
+import os
 
-from utils import cap_first
+from utils import cap_first, switch_package
 
-lombok = False
-root_package = ""
+entity_package = ".entity"
+repository_package = ".repository"
+service_package = ".service"
+service_impl_package = service_package + ".impl"
+controller_package = ".web.controller"
+dto_package = ".web.dto"
+mapper_package = ".web.mapper"
 
-def set_settings(settings_map):
-    for key, value in settings_map.items():
-        if(key == "lombok"):
-            global lombok
-            lombok = eval(value[0].capitalize())
-        if(key == "rootPackage"):
-            global root_package
-            root_package = value[0]
+def generate_project(root_package):
+    if not os.path.exists(switch_package("src_main", root_package)): os.makedirs(switch_package("src_main", root_package))
+    if not os.path.exists(switch_package("src_test", root_package)): os.makedirs(switch_package("src_test", root_package))
+    if not os.path.exists(switch_package("entity", root_package)): os.makedirs(switch_package("entity", root_package))
+    if not os.path.exists(switch_package("service", root_package)): os.makedirs(switch_package("service", root_package))
+    if not os.path.exists(switch_package("service_impl", root_package)): os.makedirs(switch_package("service_impl", root_package))
+    if not os.path.exists(switch_package("repository", root_package)): os.makedirs(switch_package("repository", root_package))
+    if not os.path.exists(switch_package("web", root_package)): os.makedirs(switch_package("web", root_package))
+    if not os.path.exists(switch_package("dto", root_package)): os.makedirs(switch_package("dto", root_package))
+    if not os.path.exists(switch_package("controller", root_package)): os.makedirs(switch_package("controller", root_package))
+    if not os.path.exists(switch_package("mapper", root_package)): os.makedirs(switch_package("mapper", root_package))
 
-def generate_mapper_inteface():
-    global root_package
-    mapper_interface = "package " + root_package + structure.mapper_package + ";\n\n"
+def generate_mapper_inteface(root_package):
+    mapper_interface = "package " + root_package + mapper_package + ";\n\n"
 
     # Imports
     mapper_interface += "import java.util.List;\n\n"
@@ -30,16 +37,15 @@ def generate_mapper_inteface():
     mapper_interface += "}\n"
     return mapper_interface
 
-def generate_mappers(class_name, attributes):
-    global root_package
-    mapper_class = "package " + root_package + structure.mapper_package + ";\n\n"
+def generate_mappers(root_package, class_name, attributes):
+    mapper_class = "package " + root_package + mapper_package + ";\n\n"
 
     # Imports
     mapper_class += "import java.util.List;\n"
     mapper_class += "import java.util.stream.Collectors;\n"
     mapper_class += "import org.springframework.stereotype.Component;\n"
-    mapper_class += "import " + root_package + structure.entity_package + "." + class_name + ";\n"
-    mapper_class += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
+    mapper_class += "import " + root_package + entity_package + "." + class_name + ";\n"
+    mapper_class += "import " + root_package + dto_package + "." + class_name + "DTO;\n\n"
 
     # Class header
     mapper_class += "@Component\n"
@@ -86,23 +92,20 @@ def generate_mappers(class_name, attributes):
     mapper_class += "}"
     return mapper_class
 
-def generate_enumeration(enumName, values):
-    global root_package
-    javaEnum = "package " + root_package + structure.entity_package + ";\n\n"
+def generate_enumeration(root_package, enum_name, enums):
+    javaEnum = "package " + root_package + entity_package + ";\n\n"
 
-    javaEnum += "public enum " + enumName + "{\n"
-    for enum in values:
-        if values.index(enum) == len(values)-1:
+    javaEnum += "public enum " + enum_name + "{\n"
+    for enum in enums:
+        if enums.index(enum) == len(enums)-1:
             javaEnum += "    " + enum + "\n"
         else:
             javaEnum += "    " + enum + ",\n"
     javaEnum += "}\n"
     return javaEnum
 
-def generate_entities(class_name, attributes):
-    global lombok
-    global root_package
-    java_entity = "package " + root_package + structure.entity_package + ";\n\n"
+def generate_entities(root_package, lombok, class_name, attributes):
+    java_entity = "package " + root_package + entity_package + ";\n\n"
 
     # Imports
     java_entity += "import javax.persistence.Entity;\n"
@@ -159,27 +162,14 @@ def generate_entities(class_name, attributes):
 
     return java_entity
 
-def generate_enums_import(class_name, class_map, enum_map):
-    enums_import = ""
-    for class_key, class_values in class_map.items():
-        if(class_key == class_name):
-            for class_value in class_values:
-                for enum_key, enum_values in enum_map.items():
-                    if(class_value.split(":")[0] == enum_key):
-                        enums_import += "import " + root_package + structure.entity_package + "." + enum_key + ";\n"
-    return enums_import
-
-def generate_dtos(class_name, attributes, enums_import):
-    global lombok
-    global root_package
-    java_dto = "package " + root_package + structure.dto_package + ";\n\n"
+def generate_dtos(root_package, lombok, class_name, attributes):
+    java_dto = "package " + root_package + dto_package + ";\n\n"
 
     # Imports
     if(lombok) == True:
         java_dto += "import lombok.Getter;\n"
         java_dto += "import lombok.Setter;\n"
         java_dto += "import lombok.NoArgsConstructor;\n"
-    java_dto += enums_import
     java_dto += "\n"
 
     # Class header
@@ -216,29 +206,27 @@ def generate_dtos(class_name, attributes, enums_import):
     java_dto += "}"
     return java_dto
 
-def generate_repositories(class_name, primaryKeyType):
-    global root_package
-    java_repository = "package " + root_package + structure.repository_package + ";\n\n"
+def generate_repositories(root_package, class_name, primary_key_type):
+    java_repository = "package " + root_package + repository_package + ";\n\n"
 
     # Imports
     java_repository += "import org.springframework.data.jpa.repository.JpaRepository;\n"
     java_repository += "import org.springframework.stereotype.Repository;\n"
-    java_repository += "import " + root_package + structure.entity_package + "." + class_name + ";\n\n"
+    java_repository += "import " + root_package + entity_package + "." + class_name + ";\n\n"
 
     # Interface header
     java_repository += "@Repository\n"
-    java_repository += "public interface " + class_name + "Repository extends JpaRepository<" + class_name + ", " + primaryKeyType + "> {\n"
+    java_repository += "public interface " + class_name + "Repository extends JpaRepository<" + class_name + ", " + primary_key_type + "> {\n"
     java_repository += "\n"
     java_repository += "}"
     return java_repository
 
-def generate_service_interface(class_name, attributes):
-    global root_package
-    service_interface = "package " + root_package + structure.service_package + ";\n\n"
+def generate_service_interface(root_package, class_name, attributes):
+    service_interface = "package " + root_package + service_package + ";\n\n"
 
     # Imports
     service_interface += "import java.util.List;\n"
-    service_interface += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
+    service_interface += "import " + root_package + dto_package + "." + class_name + "DTO;\n\n"
 
     # Methods
     service_interface += "public interface " + class_name + "Service {\n\n"
@@ -250,21 +238,19 @@ def generate_service_interface(class_name, attributes):
     service_interface += "}\n\n"
     return service_interface
 
-def generate_service(class_name, attributes):
-    global lombok
-    global root_package
-    service_impl = "package " + root_package + structure.service_impl_package + ";\n\n"
+def generate_service(root_package, lombok, class_name, attributes):
+    service_impl = "package " + root_package + service_impl_package + ";\n\n"
     
     # Imports
     service_impl += "import java.util.List;\n"
     service_impl += "import org.springframework.beans.factory.annotation.Autowired;\n"
     service_impl += "import org.springframework.stereotype.Service;\n"
-    service_impl += "import " + root_package + structure.repository_package + "." + class_name + "Repository;\n"
-    service_impl += "import " + root_package + structure.service_package + "." + class_name + "Service;\n"
-    service_impl += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n"
-    service_impl += "import " + root_package + structure.mapper_package + "." + class_name + "Mapper;\n\n"
+    service_impl += "import " + root_package + repository_package + "." + class_name + "Repository;\n"
+    service_impl += "import " + root_package + service_package + "." + class_name + "Service;\n"
+    service_impl += "import " + root_package + dto_package + "." + class_name + "DTO;\n"
+    service_impl += "import " + root_package + mapper_package + "." + class_name + "Mapper;\n\n"
     if(lombok) == True:
-        service_impl += "import lombok.NoArgsConstructor;\n\n" 
+        service_impl += "import lombok.AllArgsConstructor;\n\n" 
 
     # Class header & dependency injection
     if(lombok) == True:
@@ -306,10 +292,8 @@ def generate_service(class_name, attributes):
     service_impl += "}"
     return service_impl
 
-def generate_controllers(class_name, attributes):
-    global lombok
-    global root_package
-    controller_class = "package " + root_package + structure.controller_package + ";\n\n"
+def generate_controllers(root_package, lombok, class_name, attributes):
+    controller_class = "package " + root_package + controller_package + ";\n\n"
 
     # Imports
     controller_class += "import java.util.List;\n"
@@ -324,10 +308,10 @@ def generate_controllers(class_name, attributes):
     controller_class += "import org.springframework.web.bind.annotation.RequestBody;\n"
     controller_class += "import org.springframework.web.bind.annotation.RequestMapping;\n"
     controller_class += "import org.springframework.web.bind.annotation.RestController;\n"
-    controller_class += "import " + root_package + structure.service_impl_package + "." + class_name + "ServiceImpl;\n"
-    controller_class += "import " + root_package + structure.dto_package + "." + class_name + "DTO;\n\n"
+    controller_class += "import " + root_package + service_impl_package + "." + class_name + "ServiceImpl;\n"
+    controller_class += "import " + root_package + dto_package + "." + class_name + "DTO;\n\n"
     if(lombok) == True:
-        controller_class += "import lombok.NoArgsConstructor;\n\n"
+        controller_class += "import lombok.AllArgsConstructor;\n\n"
 
     # Class header & dependency injection
     if(lombok) == True:

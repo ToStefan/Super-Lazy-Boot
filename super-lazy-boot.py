@@ -1,125 +1,85 @@
 import sys
+import generators
+from utils import *
 
-from writers import writer
-from generators import set_settings
-from utils import clear, cap_first
-
-class_map = {}
-enum_map = {}
+class_list_of_tupples = []
+enum_list_of_tupples = []
 settings_map = {}
 
-def main():
-    parser()
-    print("")
-    syntax_check()
-    print("")
-    confirm = raw_input("y/n >> ")
-    if(confirm == "y" or confirm == "Y"):
-        set_settings(settings_map)
-        writer(class_map, enum_map)
-    else:
-        pass
+def parse_classes(classes_json_list):
+    for each in classes_json_list:
+        class_name = each["name"]
+        primary_key = ""
+        atributes = []
+        for attr in (each["atributes"]):
+            atributes.append(attr + ":" + each["atributes"][attr].replace("ENUM_", "").replace("CLASS_", ""))
+            if(attr == each["primaryKey"]): primary_key = each["atributes"][attr]
+        class_tupple = (class_name, primary_key, atributes)
+        class_list_of_tupples.append(class_tupple)
 
-def syntax_check():
-    print(">> Syntax check...")
-
-    def class_check():
-        for key, values in class_map.items():
-            print("    " + key + " (class)")
-            for value in values:
-                print("      -> " + value.split(":")[0] + " " + value.split(":")[1])
-            print("")
-
-    def enum_check():
-        for key, values in enum_map.items():
-            print("    " + key + " (enum)")
-            for value in values:
-                print("      -> " + value)
-            print("")
-
-    def settings_check():
-        for key, value in settings_map.items():
-            print("    " + key + " -> " + value[0])
-            if(key != "security" and key != "rootPackage"):
-                try:
-                    eval(cap_first(value[0]))
-                except NameError as e:
-                    raise SyntaxError(key + " value must be true or false")
-            elif(key == "security"):
-                if(value[0] != "jwt" and value[0] != "basic"):
-                    raise SyntaxError(key + " authentication must be 'jwt' or 'basic'")
-        print("")
-
-    try:
-        settings_check()
-        class_check()
-        enum_check()
-    except SyntaxError as e:
-        print("        ERROR: " + str(e))
-        raise SystemExit(0)
-
+def parse_enums(enums_json_list):
+    for each in enums_json_list:
+        enum_tupple = (each["name"], each["values"])
+        enum_list_of_tupples.append(enum_tupple)
 
 def parser():
-    with open(sys.argv[1], 'r') as file:
-        data = file.read().replace(" ", "").replace("\n", "").replace("\t", "").rstrip()
+    global settings_map
+    json_model = load_json(sys.argv[1])
+    for each in json_model:
+        if(each["type"] == "Class"):
+            parse_classes(each["classes"])
+        if(each["type"] == "Enum"):
+            parse_enums(each["enums"])
+        if(each["type"] == "Settings"):
+            settings_map = each["settings"]
 
-    def class_parser(data):
-        try:
-            classes = data.split("Class{")[1].split("}")[0].split(",")
-            for each_class in classes:
-                if(each_class == ""):
-                    print("    INFO: Comma at end of class declaration detected")
-                else:
-                    each_class = each_class.split("->")
-                    class_map[each_class[0]] = each_class[1:]
-        except IndexError:
-            print("    INFO: No classes specified")
-            raise SystemExit(0)
-        
+def generator():
+    lombok = settings_map["lombok"]
+    root_package = settings_map["rootPackage"]
+    root_package_path = root_package.replace(".", "/")
 
-    def enum_parser(data):
-        try:
-            enums = data.split("Enum{")[1].split("}")[0].split(",")
-            for each_enum in enums:
-                if(each_enum == ""):
-                    print("    INFO: Comma at end of enum declaration detected")
-                else:
-                    each_enum = each_enum.split("->")
-                    enum_map[each_enum[0]] = each_enum[1:]
-        except IndexError:
-            print("    INFO: No enums specified")
-        
+    print("... GENERATING >> project structure")
+    generators.generate_project(root_package_path)
 
-    def settings_parser(data):
-        root_package_exist = False
-        try:
-            settings = data.split("Settings{")[1].split("}")[0].split(",")
-            if(settings[0] == ""):
-                print("    INFO: No settings specified")
-            else:
-                for each_setting in settings:
-                    if(each_setting == ""):
-                        print("    INFO: Comma at end of settings declaration detected")
-                    else:
-                        each_setting = each_setting.split(":")
-                        settings_map[each_setting[0]] = each_setting[1:]
-                        if(each_setting[0] == "rootPackage"):
-                            root_package_exist = True
-                if(root_package_exist == False):
-                    print("    ERROR: No 'rootPackage' in Settings found!")
-                    raise SystemExit(0)
-        except IndexError:
-            print("    ERROR: No settings specified")
-            raise SystemExit(0)
+    print("... GENERATING >> mapper interface")
+    mapper_interface = generators.generate_mapper_inteface(root_package)
+    write(switch_package("mapper", root_package_path) + "/Mapper.java", mapper_interface)
 
-    print(">> Parsing classes...")
-    class_parser(data)
-    print(">> Parsing enums...")
-    enum_parser(data)
-    print(">> Parsing settings...")
-    settings_parser(data)
-    
+    for enum in enum_list_of_tupples:
+        print("... GENERATING >> Enum (" + enum[0] + ")")
+        javaEnum = generators.generate_enumeration(root_package, enum[0], enum[1])
+        write(switch_package("entity", root_package_path) + enum[0] + ".java", javaEnum)
+
+    for each in class_list_of_tupples:
+        print("\n... GENERATING >> Entity (" + each[0] + ")")
+        java_entity = generators.generate_entities(root_package, lombok, each[0], each[2])
+        write(switch_package("entity", root_package_path) + each[0] + ".java", java_entity)
+
+        print("... GENERATING >> " + each[0] + "Repository")
+        java_repository = generators.generate_repositories(root_package, each[0], each[1])
+        write(switch_package("repository", root_package_path) + each[0] + "Repository.java", java_repository)
+
+        print("... GENERATING >> " + each[0] + "Service")
+        service_interface = generators.generate_service_interface(root_package, each[0], each[2])
+        write(switch_package("service", root_package_path) + each[0] + "Service.java", service_interface)
+
+        print("... GENERATING >> Implementation of " + each[0] + "Service")
+        service_impl = generators.generate_service(root_package, lombok, each[0], each[2])
+        write(switch_package("service_impl", root_package_path) + each[0] + "ServiceImpl.java", service_impl)
+
+        print("... GENERATING >> " + each[0] + "Controller")
+        controller_class = generators.generate_controllers(root_package, lombok, each[0], each[2])
+        write(switch_package("controller", root_package_path) + each[0] + "Controller.java", controller_class)
+
+        print("... GENERATING >> DTO (" + each[0] + ")")
+        java_dto = generators.generate_dtos(root_package, lombok, each[0], each[2])
+        write(switch_package("dto", root_package_path) + each[0] + "DTO.java", java_dto)
+
+        print("... GENERATING >> " + each[0] + "Mapper")
+        mapper_class = generators.generate_mappers(root_package, each[0], each[2])
+        write(switch_package("mapper", root_package_path) + each[0] + "Mapper.java", mapper_class)  
 
 if __name__ == "__main__":
     clear()
-    main()
+    parser()
+    generator()
