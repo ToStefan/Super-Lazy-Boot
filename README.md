@@ -73,6 +73,8 @@ Generate controllers, services, mappers, anotations and much more for spring boo
 
 This model will create you all basic CRUD operations for controllers also will generate mappers and services and automatically will autowire everything.
 
+If attribute type is custom class or enum you need to specify "CLASS_" or "ENUM_" before type.
+
 If you don't specify settings value, default values will be used.
 
 Model file must be JSON.

@@ -5,6 +5,16 @@ from utils import *
 class_list_of_tupples = []
 enum_list_of_tupples = []
 settings_map = {}
+import_list = []
+
+def parse_import(element, class_name):
+    if("Set" in element or "List" in element):
+        element = element.split("<")[1].split(">")[0]
+        import_tupple = (class_name, element)
+    else:
+        element = element.replace("CLASS_", "").replace("ENUM_", "")
+    import_tupple = (class_name, element)
+    import_list.append(import_tupple)
 
 def parse_classes(classes_json_list):
     for each in classes_json_list:
@@ -12,7 +22,9 @@ def parse_classes(classes_json_list):
         primary_key = ""
         atributes = []
         for attr in (each["atributes"]):
-            atributes.append(attr + ":" + each["atributes"][attr].replace("ENUM_", "").replace("CLASS_", ""))
+            if("CLASS_" in each["atributes"][attr] or "ENUM_" in each["atributes"][attr]):
+                parse_import(each["atributes"][attr], class_name)
+            atributes.append(each["atributes"][attr].replace("ENUM_", "").replace("CLASS_", "") + ":" + attr)
             if(attr == each["primaryKey"]): primary_key = each["atributes"][attr]
         class_tupple = (class_name, primary_key, atributes)
         class_list_of_tupples.append(class_tupple)
@@ -72,7 +84,7 @@ def generator():
         write(switch_package("controller", root_package_path) + each[0] + "Controller.java", controller_class)
 
         print("... GENERATING >> DTO (" + each[0] + ")")
-        java_dto = generators.generate_dtos(root_package, lombok, each[0], each[2])
+        java_dto = generators.generate_dtos(root_package, lombok, each[0], each[2], enum_list_of_tupples, import_list)
         write(switch_package("dto", root_package_path) + each[0] + "DTO.java", java_dto)
 
         print("... GENERATING >> " + each[0] + "Mapper")

@@ -108,10 +108,10 @@ def generate_entities(root_package, lombok, class_name, attributes):
     java_entity = "package " + root_package + entity_package + ";\n\n"
 
     # Imports
+    for a in attributes:
+        if("List" in a): java_entity += "import java.util.List;\n"
+        if("Set" in a): java_entity += "import java.util.Set;\n"
     java_entity += "import javax.persistence.Entity;\n"
-    java_entity += "import javax.persistence.GeneratedValue;\n"
-    java_entity += "import javax.persistence.GenerationType;\n"
-    java_entity += "import javax.persistence.Id;\n"
     java_entity += "import javax.persistence.Table;\n\n"
     if(lombok) == True:
         java_entity += "import lombok.Getter;\n"
@@ -131,13 +131,7 @@ def generate_entities(root_package, lombok, class_name, attributes):
     # Attributes
     for att in attributes:
         attribute = att.split(":")
-        try:
-            if(attribute[2] == "primary"):
-                java_entity += "    @Id\n"
-                java_entity += "    @GeneratedValue(strategy = GenerationType.IDENTITY)\n"
-                java_entity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
-        except:
-            java_entity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
+        java_entity += "    private {attType} {attName}".format(attType=attribute[0], attName=attribute[1]) + ";\n"
         java_entity += "\n"
             
     if(lombok) == False:
@@ -162,10 +156,15 @@ def generate_entities(root_package, lombok, class_name, attributes):
 
     return java_entity
 
-def generate_dtos(root_package, lombok, class_name, attributes):
+def generate_dtos(root_package, lombok, class_name, attributes, enum_list_of_tupples, import_list):
     java_dto = "package " + root_package + dto_package + ";\n\n"
 
     # Imports
+    for a in attributes:
+        if("List" in a):java_dto += "import java.util.List;\n"
+        if("Set" in a): java_dto += "import java.util.Set;\n"
+    for each_import in import_list:
+        if(class_name == each_import[0]): java_dto += "import test.demo.entity." + each_import[1] +";\n"
     if(lombok) == True:
         java_dto += "import lombok.Getter;\n"
         java_dto += "import lombok.Setter;\n"
