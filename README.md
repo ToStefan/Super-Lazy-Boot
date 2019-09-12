@@ -1,53 +1,133 @@
 # Super Lazy Boot
 
-Generate controllers, services, mappers, anotations and much more for spring boot with just writting simple model file.
+Create JSON model file which can generate spring boot app with controllers, services, entites, anotations, mappers, dtos, imports
 
 ## Installation
 
-+ Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
-+ Install Python and clone repository.
-```sh
-    > git clone https://github.com/ToStefan/Super-Lazy-Boot.git
+Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
+- Install Python and clone repository.
+```
+> git clone https://github.com/ToStefan/Super-Lazy-Boot.git
 ```
 
-+ Start application.
-```sh
-    > python3 super-lazy-boot.py YOUR-MODEL-FILE-NAME.json
+- Start application.
+```
+> python3 super-lazy-boot.py YOUR-MODEL-FILE-NAME.json
 ```
 
-### Model file example & syntax explain
+### Rules & Model File Example
 
-```sh
+- `All Settings values are required`
+- Model file must be properly formated JSON
+- `ID with "type": Long and "field_type": id must be specified otherwise, project will not be generated fully`
+- "field_type" in attributes must be specified (possible values):
+	- `"normal", "id", "enum", "class", "list", "set" `
+- fields with default values and possible values (don't need to specify in some cases):
+	- "nullable": "false"
+		- `"true", "false"`
+	- "fetch_type": "lazy"
+		- `"lazy", "eager"`
+	- "cascade_type": "all",
+		- `"persist", "merge", "refresh", "remove", "detach", "all"`
+
+
+```json
 [
 	{
 	"type": "Class",
 	"classes": [
 		{
 			"name": "User",
-			"atributes": {
-				"id": "Long",
-				"username": "String",
-				"password": "String",
-				"roles": "CLASS_List<Role>"
-			},
-			"primaryKey": "id"
+			"atributes": [
+				{
+					"field": "id",
+					"type": "Long",
+					"field_type": "id"
+				},
+				{
+					"field": "userName",
+					"type": "String",
+					"field_type": "normal"
+				},
+				{
+					"field": "roles",
+					"type": "List<Role>",
+					"field_type": "list",
+					"nullable": "true",
+					"relation": "n:n",
+					"fetch_type": "eager",
+					"cascade_type": "all"
+				},
+				{
+					"field": "job",
+					"type": "Job",
+					"field_type": "class",
+					"nullable": "true",
+					"relation": "1:1"
+				},
+				{
+					"field": "images",
+					"type": "List<Image>",
+					"nullable": "true",
+					"field_type": "list",
+					"relation": "1:n"
+				}
+			]
 		},
 		{
 			"name": "Job",
-			"atributes": {
-				"id": "Long",
-				"title": "String",
-				"workType": "ENUM_WorkType"
-			},
-			"primaryKey": "id"
+			"atributes": [
+				{
+					"field": "id",
+					"type": "Long",
+					"field_type": "normal"
+				},
+				{
+					"field": "title",
+					"type": "String",
+					"field_type": "normal"
+				},
+				{
+					"field": "workType",
+					"type": "WorkType",
+					"field_type": "enum"
+				}
+			]
 		},
 		{
 			"name": "Role",
-			"atributes": {
-				"id": "Long",
-				"name": "ENUM_RoleName"
-			},
-			"primaryKey": "id"
+			"atributes": [
+				{
+					"field": "id",
+					"type": "Long",
+					"field_type": "id"
+				},
+				{
+					"field": "name",
+					"type": "RoleName",
+					"field_type": "enum"
+				}
+			]
+		},
+		{
+			"name": "Image",
+			"atributes": [
+				{
+					"field": "id",
+					"type": "Long",
+					"field_type": "id"
+				},
+				{
+					"field": "user",
+					"type": "User",
+					"field_type": "class",
+					"nullable": "true",
+					"fetch_type": "eager",
+					"cascade_type": "all",
+					"relation": "n:1"
+
+				}
+			]
 		}
 	]},
 	{
@@ -65,24 +145,10 @@ Generate controllers, services, mappers, anotations and much more for spring boo
 	{
 	"type": "Settings",
 	"settings": {
-		"lombok": true, (default: false)
-		"rootPackage": "test.demo" (rootPackage must be specified or will throw error)
+		"lombok": false,
+		"rootPackage": "tflc.stefan.test",
+		"serviceCollection": "Set:HashSet"
 	}}
 ]
+
 ```
-
-This model will create you all basic CRUD operations for controllers also will generate mappers and services and automatically will autowire everything.
-
-If attribute type is custom class or enum you need to specify "CLASS_" or "ENUM_" before type.
-
-If you don't specify settings value, default values will be used.
-
-Model file must be JSON.
-
-### Future features
-
-+ Generating on web platform
-+ Exception handling
-+ Spring Security
-+ Pagination
-+ Better annotation generator
