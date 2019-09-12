@@ -37,98 +37,94 @@ Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
 	"type": "Class",
 	"classes": [
 		{
-			"name": "User",
-			"atributes": [
-				{
-					"field": "id",
-					"type": "Long",
-					"field_type": "id"
-				},
-				{
-					"field": "userName",
-					"type": "String",
-					"field_type": "normal"
-				},
-				{
-					"field": "roles",
-					"type": "List<Role>",
-					"field_type": "list",
-					"nullable": "true",
-					"relation": "n:n",
-					"fetch_type": "eager",
-					"cascade_type": "all"
-				},
-				{
-					"field": "job",
-					"type": "Job",
-					"field_type": "class",
-					"nullable": "true",
-					"relation": "1:1"
-				},
-				{
-					"field": "images",
-					"type": "List<Image>",
-					"nullable": "true",
-					"field_type": "list",
-					"relation": "1:n"
-				}
-			]
-		},
+		"name": "User",
+		"atributes": [
+			{
+				"field": "id",
+				"type": "Long",
+				"field_type": "id"
+			},
+			{
+				"field": "userName",
+				"type": "String",
+				"field_type": "normal"
+			},
+			{
+				"field": "roles",
+				"type": "List<Role>",
+				"field_type": "list",
+				"nullable": "true",
+				"relation": "n:n",
+				"fetch_type": "eager",
+				"cascade_type": "all"
+			},
+			{
+				"field": "job",
+				"type": "Job",
+				"field_type": "class",
+				"nullable": "true",
+				"relation": "1:1"
+			},
+			{
+				"field": "images",
+				"type": "List<Image>",
+				"nullable": "true",
+				"field_type": "list",
+				"relation": "1:n"
+			}
+		]},
 		{
-			"name": "Job",
-			"atributes": [
-				{
-					"field": "id",
-					"type": "Long",
-					"field_type": "normal"
-				},
-				{
-					"field": "title",
-					"type": "String",
-					"field_type": "normal"
-				},
-				{
-					"field": "workType",
-					"type": "WorkType",
-					"field_type": "enum"
-				}
-			]
-		},
+		"name": "Job",
+		"atributes": [
+			{
+				"field": "id",
+				"type": "Long",
+				"field_type": "normal"
+			},
+			{
+				"field": "title",
+				"type": "String",
+				"field_type": "normal"
+			},
+			{
+				"field": "workType",
+				"type": "WorkType",
+				"field_type": "enum"
+			}
+		]},
 		{
-			"name": "Role",
-			"atributes": [
-				{
-					"field": "id",
-					"type": "Long",
-					"field_type": "id"
-				},
-				{
-					"field": "name",
-					"type": "RoleName",
-					"field_type": "enum"
-				}
-			]
-		},
+		"name": "Role",
+		"atributes": [
+			{
+				"field": "id",
+				"type": "Long",
+				"field_type": "id"
+			},
+			{
+				"field": "name",
+				"type": "RoleName",
+				"field_type": "enum"
+			}
+		]},
 		{
-			"name": "Image",
-			"atributes": [
-				{
-					"field": "id",
-					"type": "Long",
-					"field_type": "id"
-				},
-				{
-					"field": "user",
-					"type": "User",
-					"field_type": "class",
-					"nullable": "true",
-					"fetch_type": "eager",
-					"cascade_type": "all",
-					"relation": "n:1"
+		"name": "Image",
+		"atributes": [
+			{
+				"field": "id",
+				"type": "Long",
+				"field_type": "id"
+			},
+			{
+				"field": "user",
+				"type": "User",
+				"field_type": "class",
+				"nullable": "true",
+				"fetch_type": "eager",
+				"cascade_type": "all",
+				"relation": "n:1"
 
-				}
-			]
-		}
+			}
+		]}
 	]},
 	{
 	"type": "Enum",
