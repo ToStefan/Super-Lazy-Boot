@@ -22,6 +22,11 @@ Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
 - `ID with "type": Long and "field_type": id must be specified otherwise, project will not be generated fully`
 - "field_type" in attributes must be specified (possible values):
 	- `"normal", "id", "enum", "class", "list", "set" `
+- There is attribute for relation: `"relation"` and values are:
+	- `"1:1"`
+	- `"1:n"`
+	- `"n:1"`
+	- `"n:n"`
 - fields with default values and possible values (don't need to specify in some cases):
 	- "nullable": "false"
 		- `"true", "false"`
@@ -78,7 +83,7 @@ Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
 		{
 			"field": "id",
 			"type": "Long",
-			"field_type": "normal"
+			"field_type": "id"
 		},
 		{
 			"field": "title",

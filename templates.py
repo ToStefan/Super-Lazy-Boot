@@ -31,7 +31,7 @@ def repository_template(root_package, e, primary_key_type):
 		f'package {root_package}.repository;\n\n' + \
 		'import org.springframework.data.jpa.repository.JpaRepository;\n' + \
 		'import org.springframework.stereotype.Repository;\n' + \
-		f'import test.demo.entity.{e};\n\n' + \
+		f'import {root_package}.entity.{e};\n\n' + \
 		'@Repository\n' + \
 		f'public interface {e}Repository extends JpaRepository<{e}, {primary_key_type}>' + '{\n\n' + \
 		'}'
@@ -42,10 +42,10 @@ def service_impl_template(root_package, e, collection = "Set", lombok = False):
 		f'package {root_package}.service.impl;\n\n' + \
 		f'import java.util.{collection};\n\n' + \
 		'import org.springframework.stereotype.Service;\n\n' + \
-		f'import test.demo.repository.{e}Repository;\n' + \
-		f'import test.demo.service.{e}Service;\n' + \
-		f'import test.demo.web.dto.{e}DTO;\n' + \
-		f'import test.demo.web.mapper.{e}Mapper;\n\n'
+		f'import {root_package}.repository.{e}Repository;\n' + \
+		f'import {root_package}.service.{e}Service;\n' + \
+		f'import {root_package}.web.dto.{e}DTO;\n' + \
+		f'import {root_package}.web.mapper.{e}Mapper;\n\n'
 	if(lombok): ret_val = ret_val + \
 		'import lombok.AllArgsConstructor;\n\n' + \
 		'@AllArgsConstructor\n'
@@ -63,7 +63,7 @@ def service_impl_template(root_package, e, collection = "Set", lombok = False):
 	findAll = \
 		'    @Override\n' + \
 		f'    public {collection}<{e}DTO> findAll() ' + '{\n' + \
-		f'        return {e_low}Mapper.toDTO({e_low}Repository.findAll());\n' + \
+		f'        return {e_low}Mapper.toDTOStripped({e_low}Repository.findAll());\n' + \
 		'    }\n\n'
 
 	findById = \
@@ -96,7 +96,7 @@ def service_template(root_package, e, collection = 'Set'):
 	return \
 		f'package {root_package}.service;\n\n' + \
 		f'import java.util.{collection};\n' + \
-		f'import test.demo.web.dto.{e}DTO;\n\n' + \
+		f'import {root_package}.web.dto.{e}DTO;\n\n' + \
 		f'public interface {e}Service ' + '{\n' + \
 		f'    {collection}<{e}DTO> findAll();\n' + \
 		f'    {e}DTO findById(Long id);\n' + \
@@ -120,8 +120,8 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 		'import org.springframework.web.bind.annotation.RequestBody;\n' + \
 		'import org.springframework.web.bind.annotation.RequestMapping;\n' + \
 		'import org.springframework.web.bind.annotation.RestController;\n\n' + \
-		f'import test.demo.service.impl.{e}ServiceImpl;\n' + \
-		f'import test.demo.web.dto.{e}DTO;\n\n'
+		f'import {root_package}.service.impl.{e}ServiceImpl;\n' + \
+		f'import {root_package}.web.dto.{e}DTO;\n\n'
 	if(lombok): ret_val = ret_val + \
 		'import lombok.AllArgsConstructor;\n\n' + \
 		'@AllArgsConstructor\n'
@@ -137,8 +137,8 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 
 	findAll =  \
 		'    @GetMapping\n' + \
-		f'    public ResponseEntity<List<{e}DTO>> findAll()' + ' {\n' + \
-		f'         List<{e}DTO> retVal = {e_low}Service.findAll();\n' + \
+		f'    public ResponseEntity<{collection}<{e}DTO>> findAll()' + ' {\n' + \
+		f'         {collection}<{e}DTO> retVal = {e_low}Service.findAll();\n' + \
 		'         return new ResponseEntity<>(retVal, HttpStatus.OK);\n' + \
 		'    }\n\n'
 
@@ -170,23 +170,28 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 		'        return new ResponseEntity<>(HttpStatus.OK);\n' + \
 		'    }\n\n'
 
-	return ret_val + findAll + findById + create + update + '}'
+	return ret_val + findAll + findById + create + update + delete + '}'
 
 def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombok = False):
-	def generate_getter(field):
+	def generate_getter(field, field_type):
 		return \
-			f'    public String get{cap_first(field)}() ' + '{\n' + \
+			f'    public {field_type} get{cap_first(field)}() ' + '{\n' + \
 			f'        return this.{field};\n' + \
 			'    }\n\n'
 
-	def generate_setter(field):
+	def generate_setter(field, field_type):
 		return \
-			f'    public void set{cap_first(field)}(String {field}) ' + '{\n' + \
+			f'    public void set{cap_first(field)}({field_type} {field}) ' + '{\n' + \
 			f'        this.{field} = {field};\n' + \
 			'    }\n\n'
 
-	ret_val = ''
-	ret_val += f'package {root_package}.entity;\n\n'
+	# Imports and Class Header
+	list_import = False
+	ret_val = f'package {root_package}.entity;\n\n'
+	for a in attributes_list_of_tupples:
+		if((a[2] == "list" or a[2] == "set") and list_import != True):
+			ret_val += f'import java.util.{cap_first(a[2])}\n\n'
+			list_import = True	
 	if(lombok): ret_val += 'import lombok.Data;\n\n'
 	ret_val += 'import javax.persistence.*;\n\n'
 	if(lombok): ret_val += '@Data\n'
@@ -214,7 +219,7 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 				field += f'    @ManyToOne(fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
 				field += f'    @JoinColumn(name = "{field_name_sql}", nullable = {nullable})\n'
 			if(relation == "OneToMany"):
-				field += f'    @OneToMany(mappedBy = "id", fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
+				field += f'    @OneToMany(mappedBy = "{entity_name.lower()}", fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
 			if(relation == "ManyToMany"):
 				join = field_name_sql.split("_")[0] + "_id"
 				inverse_join = field_name_sql.split("_")[1] + "_id"
@@ -237,18 +242,18 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 			f'    public {entity_name}()' + '{\n\n' + \
 			'    }\n\n'
 		for each in attributes_list_of_tupples:
-			ret_val += generate_getter(each[0])
-			ret_val += generate_setter(each[0])
+			ret_val += generate_getter(each[0], each[3])
+			ret_val += generate_setter(each[0], each[3])
 
 	return ret_val + "}"
 
 def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok = False):
 	def generate_dto_field(field, f_type, field_type):
 		if(field_type == "class"):
-			return f'    private {f_type} {field}\n' + \
-					f'    private Long {field.lower()}Id\n'
+			return f'    private {f_type} {field};\n' + \
+					f'    private Long {field.lower()}Id;\n'
 		else:
-			return f'    private {f_type} {field}\n'
+			return f'    private {f_type} {field};\n'
 	def generate_dto_setter(field, f_type, field_type):
 		if(field_type == "class"):
 			ret_val = \
@@ -270,7 +275,7 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 				f'    public void set{cap_first(field)}({f_type} {field}) ' + '{\n' + \
 				f'        this.{field} = {field};\n' + \
 				'    }\n\n' + \
-				f'    public void set{cap_first(field)}(Long {field}Id) ' + '{\n' + \
+				f'    public void set{cap_first(field)}Id(Long {field}Id) ' + '{\n' + \
 				f'        this.{field}Id = {field}Id;\n' + \
 				'    }\n\n'
 			return ret_val
@@ -280,6 +285,19 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 			'    }\n\n'
 
 	ret_val = f'package {root_package}.web.dto;\n\n'
+	list_import = False
+	set_import = False
+
+	for att in attributes_list_of_tupples:
+		if(att[2] == "class" or att[2] == "enum"):
+			ret_val += f'import {root_package}.entity.{att[3]};\n\n'
+		elif(att[2] == "list" and list_import != True):
+			ret_val += f'import java.util.{cap_first(att[2])};\n\n'
+			list_import = True
+		elif(att[2] == "set" and set_import != True):
+			ret_val += f'import java.util.{cap_first(att[2])};\n\n'
+			set_import = True
+
 	if(lombok): ret_val = ret_val + \
 		'import lombok.Getter;\n' + \
 		'import lombok.Setter;\n' + \
@@ -303,8 +321,10 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 	return ret_val + "}"
 
 def generate_mapper(root_package, entity_name, attributes_list_of_tupples, collection):
+	# Imports and class header
 	ret_val = \
 		f'package {root_package}.web.mapper;\n\n' + \
+		'import java.util.Collection;\n' + \
 		f'import java.util.{collection};\n' + \
 		f'import java.util.stream.Collectors;\n' + \
 		'import org.springframework.stereotype.Component;\n' + \
@@ -326,7 +346,7 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toDTO (Collection)
 	to_dto_collection = \
 		'    @Override\n' + \
-		f'    public {collection}<{entity_name}>DTO toDTO(Collection<{entity_name}> entities) ' + '{\n' + \
+		f'    public {collection}<{entity_name}DTO> toDTO(Collection<{entity_name}> entities) ' + '{\n' + \
 		'        return entities\n' + \
 		'                    .stream()\n' + \
 		f'                    .map({entity_name.lower()} -> toDTO({entity_name.lower()}))\n' + \
@@ -341,7 +361,7 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	for a in attributes_list_of_tupples:
 		if(a[2] != "list" and a[2] != "set"):
 			if(a[2] == "class"):
-				to_dto_stripped += f'        dto.set{cap_first(a[0])}Id(entity.get{cap_first(a[0])}Id());\n'
+				to_dto_stripped += f'        dto.set{cap_first(a[0])}Id(entity.get{cap_first(a[0])}().getId());\n'
 			else:
 				to_dto_stripped += f'        dto.set{cap_first(a[0])}(entity.get{cap_first(a[0])}());\n'
 	to_dto_stripped = to_dto_stripped + \
@@ -351,7 +371,7 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toDTOStripped (Collection)
 	to_dto_stripped_collection = \
 		'    @Override\n' + \
-		f'    public {collection}<{entity_name}>DTO toDTOStripped(Collection<{entity_name}> entities) ' + '{\n' + \
+		f'    public {collection}<{entity_name}DTO> toDTOStripped(Collection<{entity_name}> entities) ' + '{\n' + \
 		'        return entities\n' + \
 		'                    .stream()\n' + \
 		f'                    .map({entity_name.lower()} -> toDTOStripped({entity_name.lower()}))\n' + \
@@ -364,7 +384,8 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 		f'    public {entity_name} toEntity({entity_name}DTO dto) ' + '{\n' + \
 		f'        {entity_name} entity = new {entity_name}();\n'
 	for a in attributes_list_of_tupples: 
-		if(a[2] != "id"): to_entity += f'        entity.set{cap_first(a[0])}(dto.get{cap_first(a[0])}());\n'
+		if(a[2] != "id"): 
+			to_entity += f'        entity.set{cap_first(a[0])}(dto.get{cap_first(a[0])}());\n'
 	to_entity = to_entity + \
 		'        return entity;\n' + \
 		'    }\n\n'
