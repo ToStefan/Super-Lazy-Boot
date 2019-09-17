@@ -21,7 +21,7 @@ Super Lazy Boot requires [Python](https://www.python.org/) v3+ to run.
 - Model file must be properly formated JSON
 - `ID with "type": Long and "field_type": id must be specified otherwise, project will not be generated fully`
 - "field_type" in attributes must be specified (possible values):
-	- `"normal", "id", "enum", "class", "list", "set" `
+	- `"normal", "id", "enum", "class", "list", "set", "date" `
 - There is attribute for relation: `"relation"` and values are:
 	- `"1:1"`
 	- `"1:n"`

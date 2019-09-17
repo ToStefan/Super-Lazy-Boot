@@ -2,54 +2,280 @@
 "type": "Class",
 "classes": [
 	{
-	"name": "Category",
+	"name": "User",
 	"atributes": [
 		{
 			"field": "id",
-			"type": "Long",
-			"field_type": "id"
+			"javaType": "Long",
+			"fieldType": "id"
 		},
 		{
-			"field": "name",
-			"type": "String",
-			"field_type": "normal"
+			"field": "username",
+			"javaType": "String",
+			"fieldType": "normal"
+		},
+		{
+			"field": "password",
+			"javaType": "String",
+			"fieldType": "normal"
+		},
+		{
+			"field": "firstname",
+			"javaType": "String",
+			"fieldType": "normal"
+		},
+		{
+			"field": "lastname",
+			"javaType": "String",
+			"fieldType": "normal"
+		},
+		{
+			"field": "bornDate",
+			"javaType": "LocalDateTime",
+			"fieldType": "date",
+			"nullable": "true"
+		},
+		{
+			"field": "active",
+			"javaType": "Boolean",
+			"fieldType": "normal"
+		},
+		{
+			"field": "roles",
+			"javaType": "List<Role>",
+			"fieldType": "list",
+			"nullable": "true",
+			"fetchType": "eager",
+			"relation": "n:n"
 		}
 	]},
 	{
-	"name": "Item",
-	"atributes": [
-		{
-			"field": "id",
-			"type": "Long",
-			"field_type": "id"
-		},
-		{
-			"field": "name",
-			"type": "String",
-			"field_type": "normal"
-		},
-		{
-			"field": "price",
-			"type": "Integer",
-			"field_type": "normal"
-		},
-		{
-			"field": "category",
-			"type": "Category",
-			"field_type": "class",
-			"fetch_type": "eager",
-			"relation": "n:1"
-		}
-	]}
-]},
-{
-"type": "Enum",
-"enums": [
+		"name": "Role",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			}
+		]
+	},
+	{
+		"name": "Rent",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "totalPrice",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			},
+			{
+				"field": "user",
+				"javaType": "User",
+				"fieldType": "class",
+				"relation": "n:1",
+				"fetchType": "eager"
+			},
+			{
+				"field": "vehicle",
+				"javaType": "Vehicle",
+				"fieldType": "class",
+				"relation": "n:1",
+				"fetchType": "eager"
+			},
+			{
+				"field": "rentFrom",
+				"javaType": "LocalDateTime",
+				"fieldType": "date",
+				"nullable": "true"
+			},
+						{
+				"field": "rentTo",
+				"javaType": "LocalDateTime",
+				"fieldType": "date",
+				"nullable": "true"
+			}
+		]
+	},
+	{
+		"name": "Vehicle",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "model",
+				"javaType": "Model",
+				"fieldType": "class",
+				"fetchType": "eager",
+				"relation": "n:1"
+			},
+			{
+				"field": "vehicleType",
+				"javaType": "VehicleType",
+				"fieldType": "class",
+				"fetchType": "eager",
+				"relation": "n:1"
+			},
+			{
+				"field": "fuelType",
+				"javaType": "FuelType",
+				"fieldType": "class",
+				"fetchType": "eager",
+				"relation": "n:1"
+			},
+			{
+				"field": "carBodyType",
+				"javaType": "CarBodyType",
+				"fieldType": "class",
+				"fetchType": "eager",
+				"relation": "n:1"
+			},
+			{
+				"field": "price",
+				"javaType": "String",
+				"fieldType": "normal"
+			},
+			{
+				"field": "weight",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			},
+			{
+				"field": "horsePower",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			},
+			{
+				"field": "seatCount",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			},
+			{
+				"field": "doorCount",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			},
+			{
+				"field": "description",
+				"javaType": "String",
+				"fieldType": "normal"
+			},
+			{
+				"field": "propulsion",
+				"javaType": "String",
+				"fieldType": "normal"
+			},
+			{
+				"field": "transmission",
+				"javaType": "String",
+				"fieldType": "normal"
+			},
+			{
+				"field": "trunkWeight",
+				"javaType": "Integer",
+				"fieldType": "normal"
+			}
+		]
+	},
+	{
+		"name": "FuelType",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			}
+		]
+	},
+	{
+		"name": "VehicleType",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			}
+		]
+	},
+	{
+		"name": "Model",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			},
+			{
+				"field": "manufacturer",
+				"javaType": "Manufacturer",
+				"fieldType": "class",
+				"fetchType": "eager",
+				"relation": "n:1"
+			}
+		]
+	},
+	{
+		"name": "Manufacturer",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			}
+		]
+	},
+	{
+		"name": "CarBodyType",
+		"atributes": [
+			{
+				"field": "id",
+				"javaType": "Long",
+				"fieldType": "id"
+			},
+			{
+				"field": "name",
+				"javaType": "String",
+				"fieldType": "normal"
+			}
+		]
+	}
 ]},
 {
 "type": "Settings",
 "settings": {
 	"lombok": false,
-	"rootPackage": "stefan.tflc.jelovnik",
-	"serviceCollection": "Set:HashSet"
+	"rootPackage": "stefan.tflc.misystems.zadatak",
+	"serviceCollection": "Set:HashSet",
+	"pagination": true
 }}]

@@ -28,17 +28,17 @@ def parse_classes(classes_json_list):
             try: relation = switch_relation(a["relation"].lower())
             except KeyError: relation = False
             
-            try: fetch = a["fetch_type"].upper()
+            try: fetch = a["fetchType"].upper()
             except KeyError: fetch = "LAZY"
             
-            try: cascade = a["cascade_type"].upper()
+            try: cascade = a["cascadeType"].upper()
             except KeyError: cascade = "ALL"
 
             if(relation == "ManyToMany") : sql_field_name = class_name.lower() + "_" + remove_char_at_end(a["field"], "s")
             else: sql_field_name = generate_sql_field_name(a["field"])
 
             attr_tupple = (a["field"], sql_field_name, \
-                a["field_type"], a["type"],  nullable, relation, fetch, cascade)
+                a["fieldType"], a["javaType"],  nullable, relation, fetch, cascade)
             attr_tupple_list.append(attr_tupple)
         classes[class_name] = attr_tupple_list
     return classes

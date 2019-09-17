@@ -11,20 +11,29 @@ def generate_enumeration(root_package, enum_name, list_of_enums):
 		enums_string + \
 		'}'
 
-def mapper_interface_template(root_package, collection):
-	return \
-		f'package {root_package}.web.mapper;\n\n' + \
+def mapper_interface_template(root_package, collection, pagination = False):
+	ret_val = \
+		f'package {root_package}.web.mapper;\n\n'
+	if(pagination):
+		ret_val += 'import org.springframework.data.domain.Page;\n'
+		ret_val += 'import org.springframework.data.domain.Pageable;\n'
+		ret_val += f'import {root_package}.web.dto.PageDTO;\n'
+	ret_val = ret_val + \
 		'import java.util.Collection;\n' + \
 		f'import java.util.{collection};\n\n' + \
 		'public interface Mapper<E, DTO> {\n' + \
 		'    DTO toDTO(E entity);\n' + \
 		f'    {collection}<DTO> toDTO(Collection<E> entities);\n' + \
 		'    DTO toDTOStripped(E entity);\n' + \
-		f'    {collection}<DTO> toDTOStripped(Collection<E> entities);\n' + \
+		f'    {collection}<DTO> toDTOStripped(Collection<E> entities);\n'
+	if(pagination):
+		ret_val += '    PageDTO<DTO> toPageDTO(Page<E> pages, Pageable pageable);\n'
+	ret_val = ret_val + \
 		'    E toEntityWithId(DTO dto);\n' + \
 		'    E toEntity(DTO dto);\n' + \
 		f'    {collection}<E> toEntity(Collection<DTO> dtos);\n' + \
 		'}'
+	return ret_val
 
 def repository_template(root_package, e, primary_key_type):
 	return \
@@ -36,12 +45,17 @@ def repository_template(root_package, e, primary_key_type):
 		f'public interface {e}Repository extends JpaRepository<{e}, {primary_key_type}>' + '{\n\n' + \
 		'}'
 
-def service_impl_template(root_package, e, collection = "Set", lombok = False):
+def service_impl_template(root_package, e, collection = "Set", lombok = False, pagination = False):
 	e_low = e.lower()
 	ret_val = \
-		f'package {root_package}.service.impl;\n\n' + \
+		f'package {root_package}.service.impl;\n\n'
+	if(pagination):
+		ret_val += f'import {root_package}.web.dto.PageDTO;\n'
+		ret_val += 'import org.springframework.data.domain.Pageable;\n'
+	ret_val = ret_val + \
 		f'import java.util.{collection};\n\n' + \
-		'import org.springframework.stereotype.Service;\n\n' + \
+		'import org.springframework.stereotype.Service;\n' + \
+		'import javax.transaction.Transactional;\n\n' + \
 		f'import {root_package}.repository.{e}Repository;\n' + \
 		f'import {root_package}.service.{e}Service;\n' + \
 		f'import {root_package}.web.dto.{e}DTO;\n' + \
@@ -50,6 +64,7 @@ def service_impl_template(root_package, e, collection = "Set", lombok = False):
 		'import lombok.AllArgsConstructor;\n\n' + \
 		'@AllArgsConstructor\n'
 	ret_val = ret_val + \
+		'@Transactional\n' + \
 		'@Service\n' + \
 		f'public class {e}ServiceImpl implements {e}Service ' + '{\n\n' + \
 		f'    private final {e}Repository {e_low}Repository;\n' + \
@@ -65,6 +80,15 @@ def service_impl_template(root_package, e, collection = "Set", lombok = False):
 		f'    public {collection}<{e}DTO> findAll() ' + '{\n' + \
 		f'        return {e_low}Mapper.toDTOStripped({e_low}Repository.findAll());\n' + \
 		'    }\n\n'
+
+	if(not pagination):
+		findAllPagination = ''
+	else:
+		findAllPagination = \
+			'    @Override\n' + \
+			f'    public PageDTO<{e}DTO> findAll(Pageable pageable) ' + '{\n' + \
+			f'        return {e_low}Mapper.toPageDTO({e_low}Repository.findAll(pageable), pageable);\n' + \
+			'	}\n\n'
 
 	findById = \
 		'    @Override\n' + \
@@ -90,22 +114,30 @@ def service_impl_template(root_package, e, collection = "Set", lombok = False):
 		f'        {e_low}Repository.deleteById({e_low}Id);\n' + \
 		'    }\n\n'
 
-	return ret_val + findAll + findById + create + update + delete + "}"
+	return ret_val + findAll + findAllPagination + findById + create + update + delete + "}"
 
-def service_template(root_package, e, collection = 'Set'):
-	return \
-		f'package {root_package}.service;\n\n' + \
+def service_template(root_package, e, collection = 'Set', pagination = False):
+	ret_val = \
+		f'package {root_package}.service;\n\n'
+	if(pagination):
+		ret_val += 'import org.springframework.data.domain.Pageable;\n'
+		ret_val += f'import {root_package}.web.dto.PageDTO;\n'
+	ret_val = ret_val + \
 		f'import java.util.{collection};\n' + \
 		f'import {root_package}.web.dto.{e}DTO;\n\n' + \
 		f'public interface {e}Service ' + '{\n' + \
-		f'    {collection}<{e}DTO> findAll();\n' + \
+		f'    {collection}<{e}DTO> findAll();\n'
+	if(pagination):
+		ret_val += f'    PageDTO<{e}DTO> findAll(Pageable pageable);\n'
+	ret_val = ret_val + \
 		f'    {e}DTO findById(Long id);\n' + \
 		f'    {e}DTO create({e}DTO jobDTO);\n' + \
 		f'    {e}DTO update({e}DTO jobDTO);\n' + \
 		'    void remove(Long id);\n' + \
 		'}'
+	return ret_val
 
-def controller_template(root_package, e, collection = "Set", lombok = False):
+def controller_template(root_package, e, collection = "Set", lombok = False, pagination = False):
 	e_low = e.lower()
 	ret_val = \
 		f'package {root_package}.web.controller;\n\n' + \
@@ -122,6 +154,9 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 		'import org.springframework.web.bind.annotation.RestController;\n\n' + \
 		f'import {root_package}.service.impl.{e}ServiceImpl;\n' + \
 		f'import {root_package}.web.dto.{e}DTO;\n\n'
+	if(pagination):
+		ret_val += f'import {root_package}.web.dto.PageDTO;\n'
+		ret_val += 'import org.springframework.data.domain.Pageable;\n'
 	if(lombok): ret_val = ret_val + \
 		'import lombok.AllArgsConstructor;\n\n' + \
 		'@AllArgsConstructor\n'
@@ -141,6 +176,16 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 		f'         {collection}<{e}DTO> retVal = {e_low}Service.findAll();\n' + \
 		'         return new ResponseEntity<>(retVal, HttpStatus.OK);\n' + \
 		'    }\n\n'
+
+	if(not pagination):
+		findAllPagination = ''
+	else:
+		findAllPagination = \
+			'    @GetMapping(value = "/pages")\n' + \
+			f'    public ResponseEntity<PageDTO<{e}DTO>> findAllByPages(Pageable pageable) ' + '{\n' + \
+			f'        PageDTO<{e}DTO> retVal = {e_low}Service.findAll(pageable);\n' + \
+			f'        return new ResponseEntity<PageDTO<{e}DTO>>(retVal, HttpStatus.OK);\n' + \
+			'    }\n\n'
 
 	findById = \
 		'    @GetMapping(value = "/{id}")\n' + \
@@ -170,9 +215,9 @@ def controller_template(root_package, e, collection = "Set", lombok = False):
 		'        return new ResponseEntity<>(HttpStatus.OK);\n' + \
 		'    }\n\n'
 
-	return ret_val + findAll + findById + create + update + delete + '}'
+	return ret_val + findAll + findAllPagination + findById + create + update + delete + '}'
 
-def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombok = False):
+def entity_template(root_package, e, attributes_list_of_tupples, lombok = False):
 	def generate_getter(field, field_type):
 		return \
 			f'    public {field_type} get{cap_first(field)}() ' + '{\n' + \
@@ -187,18 +232,22 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 
 	# Imports and Class Header
 	list_import = False
+	date_import = False
 	ret_val = f'package {root_package}.entity;\n\n'
 	for a in attributes_list_of_tupples:
 		if((a[2] == "list" or a[2] == "set") and list_import != True):
-			ret_val += f'import java.util.{cap_first(a[2])}\n\n'
-			list_import = True	
+			ret_val += f'import java.util.{cap_first(a[2])};\n\n'
+			list_import = True
+		if(a[2] == "date" and date_import != True):
+			ret_val += f'import java.time.{a[3]};\n\n'
+			date_import = True
 	if(lombok): ret_val += 'import lombok.Data;\n\n'
 	ret_val += 'import javax.persistence.*;\n\n'
 	if(lombok): ret_val += '@Data\n'
 	ret_val = ret_val + \
 		'@Entity\n' + \
-		f'@Table(name = "{entity_name.lower()}")\n' + \
-		f'public class {entity_name} ' + '{\n\n'
+		f'@Table(name = "{e.lower()}")\n' + \
+		f'public class {e} ' + '{\n\n'
 
 			#field_type --> normal, id, enum, class, list, set
 			#field_type_value --> Enumeration, Long, String, List<Entity>, Set
@@ -209,7 +258,7 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 		if(field_type == 'id'):
 			field += '    @Id\n'
 			field += '    @GeneratedValue(strategy = GenerationType.IDENTITY)\n'
-		if(field_type == "normal"):
+		if(field_type == "normal" or field_type == "date"):
 			field += f'    @Column(name = "{field_name_sql}", nullable = {nullable})\n'
 		if(field_type == "enum"):
 			field += '    @Enumerated(EnumType.STRING)\n'
@@ -219,7 +268,7 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 				field += f'    @ManyToOne(fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
 				field += f'    @JoinColumn(name = "{field_name_sql}", nullable = {nullable})\n'
 			if(relation == "OneToMany"):
-				field += f'    @OneToMany(mappedBy = "{entity_name.lower()}", fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
+				field += f'    @OneToMany(mappedBy = "{e.lower()}", fetch = FetchType.{fetch}, cascade = CascadeType.{cascade})\n'
 			if(relation == "ManyToMany"):
 				join = field_name_sql.split("_")[0] + "_id"
 				inverse_join = field_name_sql.split("_")[1] + "_id"
@@ -239,7 +288,7 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 	# Getters / Setters & Default constructor
 	if(not lombok):
 		ret_val = ret_val + \
-			f'    public {entity_name}()' + '{\n\n' + \
+			f'    public {e}()' + '{\n\n' + \
 			'    }\n\n'
 		for each in attributes_list_of_tupples:
 			ret_val += generate_getter(each[0], each[3])
@@ -247,11 +296,66 @@ def generate_entity(root_package, entity_name, attributes_list_of_tupples, lombo
 
 	return ret_val + "}"
 
-def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok = False):
+def page_dto_template(root_package, lombok = False):
+	attributes_list = [
+		('currentPage', 'Integer'), 
+		('itemsPerPage', 'Integer'), 
+		('totalItems', 'Long'), 
+		('items', 'Collection<T>')
+	]
+	def generate_page_dto_getter(att, java_type):
+		return \
+			f'    public {java_type} get{cap_first(att)}() ' + '{\n' + \
+			f'        return this.{att};\n' + \
+			'	}\n\n'
+
+	def generate_page_dto_setter(att, java_type):
+		return \
+			f'    public void set{cap_first(att)}({java_type} {att}) ' + '{\n' + \
+			f'        this.{att} = {att};\n' + \
+			'	}\n\n'
+
+	ret_val = \
+		f'package {root_package}.web.dto;\n\n' + \
+		'import java.util.Collection;\n\n'
+	if(lombok):
+		ret_val = ret_val + \
+			'import lombok.AllArgsConstructor;\n' + \
+			'import lombok.Getter;\n' + \
+			'import lombok.NoArgsConstructor;\n' + \
+			'import lombok.Setter;\n\n' + \
+			'@Getter\n' + \
+			'@Setter\n' + \
+			'@AllArgsConstructor\n' + \
+			'@NoArgsConstructor\n'
+	ret_val = ret_val + \
+		'public class PageDTO<T> {\n\n' + \
+		'	private Integer currentPage;\n' + \
+		'	private Integer itemsPerPage;\n' + \
+		'	private Long totalItems;\n' + \
+		'	private Collection<T> items;\n\n'
+
+	if(not lombok):
+		ret_val = ret_val + \
+			'    public PageDTO() {\n\n    }\n\n' + \
+			'    public PageDTO(Integer currentPage, Integer itemsPerPage, Long totalItems, Collection<T> items) {\n' + \
+			'		this.currentPage = currentPage;\n' + \
+			'		this.itemsPerPage = itemsPerPage;\n' + \
+			'		this.totalItems = totalItems;\n' + \
+			'		this.items = items;\n' + \
+			'	}\n\n'
+		for a in attributes_list:
+			ret_val += generate_page_dto_getter(a[0], a[1])
+			ret_val += generate_page_dto_setter(a[0], a[1])
+
+	ret_val += '}\n'
+	return ret_val
+
+def dto_template(root_package, e, attributes_list_of_tupples, lombok = False):
 	def generate_dto_field(field, f_type, field_type):
 		if(field_type == "class"):
 			return f'    private {f_type} {field};\n' + \
-					f'    private Long {field.lower()}Id;\n'
+					f'    private Long {field}Id;\n'
 		else:
 			return f'    private {f_type} {field};\n'
 	def generate_dto_setter(field, f_type, field_type):
@@ -287,16 +391,23 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 	ret_val = f'package {root_package}.web.dto;\n\n'
 	list_import = False
 	set_import = False
+	date_import = False
 
 	for att in attributes_list_of_tupples:
 		if(att[2] == "class" or att[2] == "enum"):
 			ret_val += f'import {root_package}.entity.{att[3]};\n\n'
-		elif(att[2] == "list" and list_import != True):
+		if(att[2] == "list" and list_import != True):
 			ret_val += f'import java.util.{cap_first(att[2])};\n\n'
 			list_import = True
-		elif(att[2] == "set" and set_import != True):
+		if(att[2] == "list" and "<" in att[3]):
+			to_import_entity = att[3].split("<")[1].split(">")[0]
+			ret_val += f'import {root_package}.entity.' + to_import_entity + ";\n"
+		if(att[2] == "set" and set_import != True):
 			ret_val += f'import java.util.{cap_first(att[2])};\n\n'
 			set_import = True
+		if(att[2] == "date" and date_import != True):
+			ret_val += f'import java.time.{att[3]};\n\n'
+			date_import = False
 
 	if(lombok): ret_val = ret_val + \
 		'import lombok.Getter;\n' + \
@@ -304,7 +415,7 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 		'import lombok.NoArgsConstructor;\n\n' + \
 		'@Getter\n@Setter\n@NoArgsConstructor\n'
 	ret_val =  ret_val + \
-		f'public class {entity_name}DTO ' + '{\n\n'
+		f'public class {e}DTO ' + '{\n\n'
 
 	# Attributes
 	for att in attributes_list_of_tupples:
@@ -313,31 +424,37 @@ def generate_dto(root_package, entity_name, attributes_list_of_tupples, lombok =
 	# Getters / Setters & Default constructor
 	ret_val += "\n"
 	if(not lombok):
-		ret_val += f'    public {entity_name}DTO()' + '{\n\n    }\n\n'
+		ret_val += f'    public {e}DTO()' + '{\n\n    }\n\n'
 		for att in attributes_list_of_tupples:
 			ret_val += generate_dto_getter(att[0], att[3], att[2])
 			ret_val += generate_dto_setter(att[0], att[3], att[2])
 
 	return ret_val + "}"
 
-def generate_mapper(root_package, entity_name, attributes_list_of_tupples, collection):
+def mapper_template(root_package, e, attributes_list_of_tupples, collection, pagination = False):
 	# Imports and class header
 	ret_val = \
-		f'package {root_package}.web.mapper;\n\n' + \
+		f'package {root_package}.web.mapper;\n\n'
+	if(pagination):
+		ret_val = ret_val + \
+			'import org.springframework.data.domain.Page;\n' + \
+			'import org.springframework.data.domain.Pageable;\n' + \
+			f'import {root_package}.web.dto.PageDTO;\n'
+	ret_val = ret_val + \
 		'import java.util.Collection;\n' + \
 		f'import java.util.{collection};\n' + \
 		f'import java.util.stream.Collectors;\n' + \
 		'import org.springframework.stereotype.Component;\n' + \
-		f'import {root_package}.entity.{entity_name};\n' + \
-		f'import {root_package}.web.dto.{entity_name}DTO;\n\n' + \
+		f'import {root_package}.entity.{e};\n' + \
+		f'import {root_package}.web.dto.{e}DTO;\n\n' + \
 		'@Component\n' + \
-		f'public class {entity_name}Mapper implements Mapper<{entity_name}, {entity_name}DTO> ' + '{\n\n'
+		f'public class {e}Mapper implements Mapper<{e}, {e}DTO> ' + '{\n\n'
 
 	# toDTO
 	to_dto = \
 		'    @Override\n' + \
-		f'    public {entity_name}DTO toDTO({entity_name} entity) ' + '{\n' + \
-		f'        {entity_name}DTO dto = new {entity_name}DTO();\n'
+		f'    public {e}DTO toDTO({e} entity) ' + '{\n' + \
+		f'        {e}DTO dto = new {e}DTO();\n'
 	for a in attributes_list_of_tupples: to_dto += f'        dto.set{cap_first(a[0])}(entity.get{cap_first(a[0])}());\n'
 	to_dto = to_dto + \
 		'        return dto;\n' + \
@@ -346,18 +463,18 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toDTO (Collection)
 	to_dto_collection = \
 		'    @Override\n' + \
-		f'    public {collection}<{entity_name}DTO> toDTO(Collection<{entity_name}> entities) ' + '{\n' + \
+		f'    public {collection}<{e}DTO> toDTO(Collection<{e}> entities) ' + '{\n' + \
 		'        return entities\n' + \
 		'                    .stream()\n' + \
-		f'                    .map({entity_name.lower()} -> toDTO({entity_name.lower()}))\n' + \
+		f'                    .map({e.lower()} -> toDTO({e.lower()}))\n' + \
 		f'                    .collect(Collectors.to{collection}());\n' + \
 		'    }\n\n'
 
 	# toDTOStripped
 	to_dto_stripped = \
 		'    @Override\n' + \
-		f'    public {entity_name}DTO toDTOStripped({entity_name} entity) ' + '{\n' + \
-		f'        {entity_name}DTO dto = new {entity_name}DTO();\n'
+		f'    public {e}DTO toDTOStripped({e} entity) ' + '{\n' + \
+		f'        {e}DTO dto = new {e}DTO();\n'
 	for a in attributes_list_of_tupples:
 		if(a[2] != "list" and a[2] != "set"):
 			if(a[2] == "class"):
@@ -371,18 +488,31 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toDTOStripped (Collection)
 	to_dto_stripped_collection = \
 		'    @Override\n' + \
-		f'    public {collection}<{entity_name}DTO> toDTOStripped(Collection<{entity_name}> entities) ' + '{\n' + \
+		f'    public {collection}<{e}DTO> toDTOStripped(Collection<{e}> entities) ' + '{\n' + \
 		'        return entities\n' + \
 		'                    .stream()\n' + \
-		f'                    .map({entity_name.lower()} -> toDTOStripped({entity_name.lower()}))\n' + \
+		f'                    .map({e.lower()} -> toDTOStripped({e.lower()}))\n' + \
 		f'                    .collect(Collectors.to{collection}());\n' + \
 		'    }\n\n'
+
+	# ToPageDTO
+	if(pagination):
+		to_page_dto = \
+			'    @Override\n' + \
+			f'    public PageDTO<{e}DTO> toPageDTO(Page<{e}> pages, Pageable pageable) ' + '{\n' + \
+			f'        return new PageDTO<{e}DTO>(pageable.getPageNumber(), \n' + \
+			'                pageable.getPageSize(), \n' + \
+			'                pages.getTotalElements(), \n' + \
+			'                toDTOStripped(pages.getContent()));\n' + \
+			'    }\n\n'
+	else:
+		to_page_dto = ''
 
 	# toEntity
 	to_entity = \
 		'    @Override\n' + \
-		f'    public {entity_name} toEntity({entity_name}DTO dto) ' + '{\n' + \
-		f'        {entity_name} entity = new {entity_name}();\n'
+		f'    public {e} toEntity({e}DTO dto) ' + '{\n' + \
+		f'        {e} entity = new {e}();\n'
 	for a in attributes_list_of_tupples: 
 		if(a[2] != "id"): 
 			to_entity += f'        entity.set{cap_first(a[0])}(dto.get{cap_first(a[0])}());\n'
@@ -393,8 +523,8 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toEntityWithId
 	to_entity_with_id = \
 		'    @Override\n' + \
-		f'    public {entity_name} toEntityWithId({entity_name}DTO dto) ' + '{\n' + \
-		f'        {entity_name} entity = new {entity_name}();\n'
+		f'    public {e} toEntityWithId({e}DTO dto) ' + '{\n' + \
+		f'        {e} entity = new {e}();\n'
 	for a in attributes_list_of_tupples: to_entity_with_id += f'        entity.set{cap_first(a[0])}(dto.get{cap_first(a[0])}());\n'
 	to_entity_with_id = to_entity_with_id + \
 		'        return entity;\n' + \
@@ -403,12 +533,12 @@ def generate_mapper(root_package, entity_name, attributes_list_of_tupples, colle
 	# toEntity (Collection)
 	to_entity_collection = \
 		'    @Override\n' + \
-		f'    public {collection}<{entity_name}> toEntity(Collection<{entity_name}DTO> dtos) ' + '{\n' + \
+		f'    public {collection}<{e}> toEntity(Collection<{e}DTO> dtos) ' + '{\n' + \
 		'        return dtos\n' + \
 		'                    .stream()\n' + \
-		f'                    .map({entity_name.lower()} -> toEntity({entity_name.lower()}))\n' + \
+		f'                    .map({e.lower()} -> toEntity({e.lower()}))\n' + \
 		f'                    .collect(Collectors.to{collection}());\n' + \
 		'    }\n\n'
 
 	return ret_val + to_dto + to_dto_collection + to_dto_stripped + to_dto_stripped_collection + \
-			to_entity + to_entity_with_id + to_entity_collection + '}'
+			to_page_dto + to_entity + to_entity_with_id + to_entity_collection + '}'
